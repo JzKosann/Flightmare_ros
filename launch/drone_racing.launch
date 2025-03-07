@@ -1,0 +1,15 @@
+<launch>
+    <arg name="debug" default="0" />
+    <arg name="use_unity_editor" default="false" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find acados_nmpc_controller)/launch/records.rviz" output="screen" />
+    <!-- RPG Flightmare Unity Render. -->
+    <node pkg="flightrender" type="RPG_Flightmare.x86_64" name="rpg_flightmare_render" unless="$(arg use_unity_editor)">
+    </node>
+
+    <node name="acados_racing" pkg="acados_nmpc_controller" type="acados_racing" output="screen" launch-prefix="gdb -ex run --args" if="$(arg debug)" >
+    </node>
+
+    <node name="acados_racing" pkg="acados_nmpc_controller" type="acados_racing" output="screen" unless="$(arg debug)">
+    </node>
+
+</launch>
