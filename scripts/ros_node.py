@@ -2,35 +2,38 @@
 #  coding :utf-8
 
 import rospy
-from std_msgs.msg import String
+from geometry_msgs.msg import Pose
 import sys
+## acados import package
+from acados_template import AcadosOcp, AcadosOcpSolver
+from model import *
 
-# sys.path.append('/home/jz/Documents/acados/interfaces/acados_template/acados_template')
-# sys.path.append('/home/jz/anaconda3/envs/flightros_env/lib/python3.8/site-packages')
+# @function # 检查ros的环境配置
+# def check_syspath():
+#     for p in sys.path:
+#        print(p)
+#     print()
+#     return
 
-for p in sys.path:
-    print(p)
-
-print()
-# import acados_template
-
-# print(acados_template.__file__)
-
-
-
-
-def talker():
-    pub = rospy.Publisher('chatter', String, queue_size=10)
-    rospy.init_node('talker', anonymous=True)
-    rate = rospy.Rate(10)
-    while not rospy.is_shutdown():
-        hello_str = "hello %s" % rospy.get_time()
-        rospy.loginfo(hello_str)
-        pub.publish(hello_str)
-        rate.sleep()
 
 if __name__ == '__main__':
-    try:
-        talker()
-    except rospy.ROSInternalException:
-        pass
+    rospy.init_node('acados_py',anonymous=True)
+    rate = rospy.Rate(10)
+
+    desire_orinetation_pub = rospy.Publisher('flightmare_control/orinetation', Pose, queue_size=1000) # 发布控制信息
+    z_bias =0
+
+    while not rospy.is_shutdown():
+        pose_msg = Pose()
+        
+        z_bias+=0.2
+        pose_msg.position.x = 1.0
+        pose_msg.position.y = 1.0
+        pose_msg.position.z = z_bias
+        pose_msg.orientation.w = 0.707
+        pose_msg.orientation.x = 0
+        pose_msg.orientation.y = 0
+        pose_msg.orientation.z = 0.707
+        desire_orinetation_pub.publish(pose_msg)
+        # test_print()
+        rate.sleep()
