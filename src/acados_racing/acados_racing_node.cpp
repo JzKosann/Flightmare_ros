@@ -44,6 +44,7 @@ void OrinetationCallback(const geometry_msgs::Pose::ConstPtr &msg)
 
     // Set new state
     // quad_ptr->setState(quad_state);
+
     Scalar t = 0.0;
     Vector<4> thrusts{500, 500, 500, 500};
     Command cmd(t, thrusts);
@@ -61,6 +62,7 @@ void OrinetationCallback(const geometry_msgs::Pose::ConstPtr &msg)
         std::cout << "Using single rotor thrusts mode." << std::endl;
         std::cout << "Thrusts: " << cmd.thrusts.transpose() << std::endl;
     }
+    quad_ptr->getDynamics();
     quad_ptr->run(cmd, ctl_dt);
     ROS_INFO("get pose info!");
 
