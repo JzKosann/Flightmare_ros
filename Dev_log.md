@@ -35,3 +35,9 @@
 - 待解决问题....
   - 『NMPC控制框架』：单电机输出应该从转速到推力转换
   - 『DYNAMICS 方程』：在 `flightlib` 中找一下
+
+## 2025.3.9
+
+-  完善了Dynamic 方程和 `model.py`，随后需要进行测试，
+
+  参考代码：https://github.com/LGQWakkk/Quadrotor-NMPC-Control/blob/main/export_model.py

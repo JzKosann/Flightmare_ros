@@ -33,4 +33,8 @@
   <depend>cv_bridge</depend>
   <depend>mav_msgs</depend>
 
+
+  <!-- <depend>message_generation</depend> -->
+  <!-- <depend>message_runtime</depend> -->
+
 </package>

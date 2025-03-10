@@ -33,27 +33,16 @@ std::shared_ptr<Quadrotor> quad_ptr = std::make_shared<Quadrotor>();
 
 void OrinetationCallback(const geometry_msgs::Pose::ConstPtr &msg)
 {
-    // Define new quadrotor state
-    //   quad_state.x[QS::POSX] = msg->position.x;
-    //   quad_state.x[QS::POSY] = msg->position.y;
-    //   quad_state.x[QS::POSZ] = msg->position.z;
-    //   quad_state.x[QS::ATTW] = msg->orientation.w;
-    //   quad_state.x[QS::ATTX] = msg->orientation.x;
-    //   quad_state.x[QS::ATTY] = msg->orientation.y;
-    //   quad_state.x[QS::ATTZ] = msg->orientation.z;
-
-    // Set new state
-    // quad_ptr->setState(quad_state);
 
     Scalar t = 0.0;
-    Vector<4> thrusts{500, 500, 500, 500};
+    Vector<4> thrusts{3.5, 3.5, 3.5, 3.5};
     Command cmd(t, thrusts);
-
     Scalar ctl_dt = 0.01;
     // 检查命令是否有效
     if (cmd.valid())
     {
         std::cout << "Command is valid." << std::endl;
+        quad_ptr->run(cmd, ctl_dt);
     }
 
     // 检查控制模式
@@ -62,13 +51,11 @@ void OrinetationCallback(const geometry_msgs::Pose::ConstPtr &msg)
         std::cout << "Using single rotor thrusts mode." << std::endl;
         std::cout << "Thrusts: " << cmd.thrusts.transpose() << std::endl;
     }
-    quad_ptr->getDynamics();
-    quad_ptr->run(cmd, ctl_dt);
-    ROS_INFO("get pose info!");
+    std::cout<<quad_ptr->getDynamics()<<std::endl; // 打印动态方程参数
+    
+    quad_ptr->getState(&quad_state);
 
-    // printf("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\r\n",quad_state.x[QS::POSX],quad_state.x[QS::POSY],quad_state.x[QS::POSZ],quad_state.x[QS::TAU],
-    //   quad_state.x[QS::ACCX],quad_state.x[QS::ACCY],quad_state.x[QS::ACCZ]);
-
+    ROS_INFO("get pose info!%d");
     unity_bridge_ptr->getRender(0);
     unity_bridge_ptr->handleOutput();
 }
@@ -84,6 +71,7 @@ int main(int argc, char *argv[])
     // 创建订阅者 订阅发布的控制预期位置
     ros::Subscriber Orinetation_sub = nh.subscribe("flightmare_control/orinetation", 10, OrinetationCallback);
 
+    // 创建发布者
     // unity 场景设置--------------------------------------------------------------------------//
     // Flightmare(Unity3D)
     SceneID scene_id{UnityScene::WAREHOUSE}; // INDUSTRIAL

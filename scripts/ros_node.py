@@ -3,10 +3,11 @@
 
 import rospy
 from geometry_msgs.msg import Pose
+from mav_msgs.msg import quad_thrusts
 import sys
 ## acados import package
 from acados_template import AcadosOcp, AcadosOcpSolver
-from model import *
+from controller import *
 
 # @function # 检查ros的环境配置
 # def check_syspath():
@@ -20,20 +21,13 @@ if __name__ == '__main__':
     rospy.init_node('acados_py',anonymous=True)
     rate = rospy.Rate(10)
 
-    desire_orinetation_pub = rospy.Publisher('flightmare_control/orinetation', Pose, queue_size=1000) # 发布控制信息
-    z_bias =0
-
+    quad_thrusts_pub = rospy.Publisher('flightmare_control/thrusts', quad_thrusts, queue_size=10) # 发布控制信息
+    quad_thrusts_msg = quad_thrusts()
+    
     while not rospy.is_shutdown():
-        pose_msg = Pose()
+
+        # quad_thrusts.thrusts_1
         
-        z_bias+=0.2
-        pose_msg.position.x = 1.0
-        pose_msg.position.y = 1.0
-        pose_msg.position.z = z_bias
-        pose_msg.orientation.w = 0.707
-        pose_msg.orientation.x = 0
-        pose_msg.orientation.y = 0
-        pose_msg.orientation.z = 0.707
-        desire_orinetation_pub.publish(pose_msg)
+        quad_thrusts_pub.publish(quad_thrusts_msg)
         # test_print()
         rate.sleep()
