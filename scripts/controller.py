@@ -151,12 +151,14 @@ class NMPC_Controller:
             w_opt_acados[i, :] = self.acados_solver.get(i, "u")
             x_opt_acados[i + 1, :] = self.acados_solver.get(i + 1, "x")
         # return w_opt_acados, x_opt_acados  # 返回控制输入和状态
-        _end = time.perf_counter()
+        _end = time.perf_counter() # 计算时间
         _dt = _end - _start
         f = Ct * (w_opt_acados[:, 0]**2 + w_opt_acados[:, 1]**2 + w_opt_acados[:, 2]**2 + w_opt_acados[:, 3]**2)
         # print("Thrust (f):", f)
         # print(w_opt_acados)
-        return _dt, w_opt_acados[0], x_opt_acados  # 返回最近控制输入 4 Vector(速度)
+        controls = w_opt_acados[0]**2*self.Ct
+        # return _dt, w_opt_acados[0], x_opt_acados  # 返回最近控制输入 4 Vector(速度)
+        return _dt, controls, x_opt_acados  # 返回最近控制输入 4 Vector(速度)
     
         # NMPC位置控制
     # goal_pos: 目标三维位置[x y z yaw]

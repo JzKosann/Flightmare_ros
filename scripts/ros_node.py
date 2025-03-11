@@ -2,11 +2,7 @@
 #  coding :utf-8
 
 import rospy
-from geometry_msgs.msg import Pose
-from mav_msgs.msg import quad_thrusts
-import sys
-## acados import package
-from acados_template import AcadosOcp, AcadosOcpSolver
+from mav_msgs.msg import QuadThrusts, QuadCurState
 from controller import *
 
 # @function # 检查ros的环境配置
@@ -15,19 +11,71 @@ from controller import *
 #        print(p)
 #     print()
 #     return
+quad_thrusts_pub = None
+quad_state_sub = None
+nmpc_controller = NMPC_Controller()
+quad_thrusts_msg = QuadThrusts()
+quad_state = QuadCurState()
+def quad_Callback(data):
+    global nmpc_controller,quad_thrusts_msg, quad_state
+    quad_state = data
+    # cur_state = np.array([data.x, data.y, data.z,
+    #                       data.vx, data.vy, data.vz,
+    #                       data.phi, data.theta, data.psi,
+    #                       data.p, data.q, data.r])
+    # tar_pos = np.array([0,0,20,0,0,0,0,0,0,0,0,0])
+
+    # _dt, w, x_opt_acados = nmpc_controller.nmpc_state_control(current_state=cur_state, target_state=tar_pos)
+
+    # quad_thrusts_msg.thrusts_1 = w[0]
+    # quad_thrusts_msg.thrusts_2 = w[1]
+    # quad_thrusts_msg.thrusts_3 = w[2]
+    # quad_thrusts_msg.thrusts_4 = w[3]
+    print("-------quadrotor_state-------")
+    print(data)
+    print(w[0])
+    print(w[1])
+
+def ros_init():
+    global quad_state_sub, quad_thrusts_pub
+    quad_thrusts_pub = rospy.Publisher('flightmare_control/thrusts', QuadThrusts, queue_size=100) # 发布控制信息
+    quad_state_sub = rospy.Subscriber('flightmare_control/state_info', QuadCurState, quad_Callback)
 
 
 if __name__ == '__main__':
+    
     rospy.init_node('acados_py',anonymous=True)
-    rate = rospy.Rate(10)
+    ros_init()
+    rate = rospy.Rate(100)
+    # quad_thrusts_msg = QuadThrusts()
 
-    quad_thrusts_pub = rospy.Publisher('flightmare_control/thrusts', quad_thrusts, queue_size=10) # 发布控制信息
-    quad_thrusts_msg = quad_thrusts()
+    # # cnt = 0 
+    # quad_thrusts_msg.thrusts_1 = 0
+    # quad_thrusts_msg.thrusts_2 = 0
+    # quad_thrusts_msg.thrusts_3 = 0
+    # # quad_thrusts_msg.thrusts_4 = 0
+    # for cnt in range(50):
+    #     quad_thrusts_pub.publish(quad_thrusts_msg)
+    #     print(f"arousing.....%{cnt}")
+    #     rate.sleep()
+
+
+    # rospy.spin()
     
     while not rospy.is_shutdown():
 
-        # quad_thrusts.thrusts_1
+        cur_state = np.array([quad_state.x, quad_state.y, quad_state.z,
+                          quad_state.vx, quad_state.vy, quad_state.vz,
+                          quad_state.phi, quad_state.theta, quad_state.psi,
+                          quad_state.p, quad_state.q, quad_state.r])
+        tar_pos = np.array([0,0,20,0,0,0,0,0,0,0,0,0])
+        _dt, w, x_opt_acados = nmpc_controller.nmpc_state_control(current_state=cur_state, target_state=tar_pos)
+
+        quad_thrusts_msg.thrusts_1 = w[0]
+        quad_thrusts_msg.thrusts_2 = w[1]
+        quad_thrusts_msg.thrusts_3 = w[2]
+        quad_thrusts_msg.thrusts_4 = w[3]
         
         quad_thrusts_pub.publish(quad_thrusts_msg)
         # test_print()
-        rate.sleep()
+        # rate.sleep()

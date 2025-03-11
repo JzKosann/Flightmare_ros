@@ -45,6 +45,10 @@ CATKIN_DEPENDS
 cs_add_executable(acados_racing
     src/acados_racing/acados_racing_node.cpp
 )
+# include_directories(
+#     ${catkin_INCLUDE_DIRS}
+#     ${catkin_INCLUDE_DIRS}/include
+# )
 
 target_link_libraries(acados_racing
 ${catkin_LIBRARIES}

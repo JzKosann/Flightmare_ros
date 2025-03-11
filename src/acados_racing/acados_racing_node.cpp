@@ -3,6 +3,8 @@
 #include <image_transport/image_transport.h>
 #include <ros/ros.h>
 #include <geometry_msgs/Pose.h>
+#include <mav_msgs/QuadThrusts.h>
+#include <mav_msgs/QuadCurState.h>
 
 // flightlib
 #include "flightlib/bridges/unity_bridge.hpp"
@@ -25,17 +27,54 @@
 #include <quadrotor_common/trajectory_point.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h> // 用于轨迹消息
 
+#include <acados_nmpc_controller/ros_node.hpp>
+#include <thread>
+
 using namespace flightlib;
 std::shared_ptr<UnityBridge> unity_bridge_ptr = UnityBridge::getInstance();
 QuadState quad_state;
 Command quad_command;
 std::shared_ptr<Quadrotor> quad_ptr = std::make_shared<Quadrotor>();
 
-void OrinetationCallback(const geometry_msgs::Pose::ConstPtr &msg)
+
+void render_process()
+{
+    ros::Rate loop_rate(10);
+    while (ros::ok())
+    {
+        // 发布无人机状态信息
+        quad_ptr->getState(&quad_state);
+        mav_msgs::QuadCurState quad_state_msg;
+        quad_state_msg.x = quad_state.x[QS::POSX];
+        quad_state_msg.y = quad_state.x[QS::POSY];
+        quad_state_msg.z = quad_state.x[QS::POSZ];
+        quad_state_msg.vx = quad_state.x[QS::VELX];
+        quad_state_msg.vy = quad_state.x[QS::VELY];
+        quad_state_msg.vz = quad_state.x[QS::VELZ];
+        double phi, theta, psi;
+        acados_ros::quaternionToEuler(quad_state.x[QS::ATTW], quad_state.x[QS::ATTX], quad_state.x[QS::ATTY], quad_state.x[QS::ATTZ],
+                                      phi, theta, psi);
+        quad_state_msg.phi = phi;
+        quad_state_msg.theta = theta;
+        quad_state_msg.psi = psi;
+        quad_state_msg.p = quad_state.x[QS::OMEX];
+        quad_state_msg.q = quad_state.x[QS::OMEY];
+        quad_state_msg.r = quad_state.x[QS::OMEZ];
+        ros::Time Unity_time = ros::Time::now();
+        quad_state_msg.time = Unity_time.toSec();
+        acados_ros::QuadCurStates_pub.publish(quad_state_msg);
+        // unity_bridge_ptr->getRender(0);
+        // unity_bridge_ptr->handleOutput();
+        ROS_INFO("threading");
+        loop_rate.sleep();
+    }
+}
+
+void acados_ros::UnityCallback(const mav_msgs::QuadThrusts::ConstPtr &msg)
 {
 
     Scalar t = 0.0;
-    Vector<4> thrusts{3.5, 3.5, 3.5, 3.5};
+    Vector<4> thrusts{msg->thrusts_1, msg->thrusts_2, msg->thrusts_3, msg->thrusts_4};
     Command cmd(t, thrusts);
     Scalar ctl_dt = 0.01;
     // 检查命令是否有效
@@ -51,11 +90,30 @@ void OrinetationCallback(const geometry_msgs::Pose::ConstPtr &msg)
         std::cout << "Using single rotor thrusts mode." << std::endl;
         std::cout << "Thrusts: " << cmd.thrusts.transpose() << std::endl;
     }
-    std::cout<<quad_ptr->getDynamics()<<std::endl; // 打印动态方程参数
-    
+    // std::cout<<quad_ptr->getDynamics()<<std::endl; // 打印动态方程参数
+    // 发布无人机状态信息
     quad_ptr->getState(&quad_state);
+    mav_msgs::QuadCurState quad_state_msg;
+    quad_state_msg.x = quad_state.x[QS::POSX];
+    quad_state_msg.y = quad_state.x[QS::POSY];
+    quad_state_msg.z = quad_state.x[QS::POSZ];
+    quad_state_msg.vx = quad_state.x[QS::VELX];
+    quad_state_msg.vy = quad_state.x[QS::VELY];
+    quad_state_msg.vz = quad_state.x[QS::VELZ];
+    double phi, theta, psi;
+    acados_ros::quaternionToEuler(quad_state.x[QS::ATTW], quad_state.x[QS::ATTX], quad_state.x[QS::ATTY], quad_state.x[QS::ATTZ],
+                                  phi, theta, psi);
+    quad_state_msg.phi = phi;
+    quad_state_msg.theta = theta;
+    quad_state_msg.psi = psi;
+    quad_state_msg.p = quad_state.x[QS::OMEX];
+    quad_state_msg.q = quad_state.x[QS::OMEY];
+    quad_state_msg.r = quad_state.x[QS::OMEZ];
+    // ros::Time Unity_time = ros::Time::now();
+    // quad_state_msg.time = Unity_time.toSec();
+    acados_ros::QuadCurStates_pub.publish(quad_state_msg);
 
-    ROS_INFO("get pose info!%d");
+    ROS_INFO("get pose info!");
     unity_bridge_ptr->getRender(0);
     unity_bridge_ptr->handleOutput();
 }
@@ -68,9 +126,10 @@ int main(int argc, char *argv[])
     ros::NodeHandle nh("");
     ros::NodeHandle pnh("~");
     ros::Rate(50.0);
+    ros::Time::init();
     // 创建订阅者 订阅发布的控制预期位置
-    ros::Subscriber Orinetation_sub = nh.subscribe("flightmare_control/orinetation", 10, OrinetationCallback);
-
+    acados_ros::QuadThrusts_sub = nh.subscribe("flightmare_control/thrusts", 10, acados_ros::UnityCallback);
+    acados_ros::QuadCurStates_pub = nh.advertise<mav_msgs::QuadCurState>("flightmare_control/state_info", 10);
     // 创建发布者
     // unity 场景设置--------------------------------------------------------------------------//
     // Flightmare(Unity3D)
@@ -145,29 +204,23 @@ int main(int argc, char *argv[])
     unity_bridge_ptr->addStaticObject(gate_4);
     unity_bridge_ptr->addStaticObject(gate_5);
     unity_bridge_ptr->addQuadrotor(quad_ptr);
+    mav_msgs::QuadCurState quad_state_msg;
+    for (int cnt; cnt <= 500; cnt++)// 轮发 唤醒py
+            acados_ros::QuadCurStates_pub.publish(quad_state_msg);
+    ROS_INFO("aroused!");
     // connect unity
     unity_ready = unity_bridge_ptr->connectUnity(scene_id);
 
     FrameID frame_id = 0;
 
     if (unity_ready)
+    {
+        // render_process.
         ros::spin();
-
-    // while (ros::ok() && unity_ready) {
-    //   ros::Time _timeStamp = ros::Time::now();
-    //   unity_bridge_ptr->getRender(0);
-    //   unity_bridge_ptr->handleOutput();
-    //   // get img
-    //   // cv::Mat img;
-    //   // rgb_camera->getRGBImage(img);
-    //   // sensor_msgs::ImagePtr rgb_msg =
-    //   //   cv_bridge::CvImage(std_msgs::Header(), "bgr8", img).toImageMsg();
-    //   // rgb_msg->header.stamp = _timeStamp;
-    //   // rgb_pub.publish(rgb_msg);
-    //   //
-    //   frame_id += 1;
-
-    // }
+        // std::thread render_thread{render_process};
+    }
+    else
+        ROS_ERROR("Unity not ready!");
 
     return 0;
 }
