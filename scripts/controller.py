@@ -17,6 +17,8 @@ d = 0.25 # 旋翼到无人机中心的距离（臂长）
 Cm = 2.128e-08 # 转矩系数
 Ct = 1.33e-06 # 拉力系数
 
+np.set_printoptions(suppress=True)
+
 class NMPC_Controller:
     def __init__(self):
         self.ocp = AcadosOcp() # OCP优化问题
@@ -25,9 +27,9 @@ class NMPC_Controller:
 
         self.Tf = 0.75                      # 预测时间长度
         self.N = 50                         # 预测步数（节点数量）
-        self.nx = self.model.x.size()[0]    # 状态维度
+        self.nx = self.model.x.size()[0]    # 状态维度 四元数 13
         self.nu = self.model.u.size()[0]    # 控制输入维度
-        self.ny = self.nx + self.nu         # 评估维度 12+4
+        self.ny = self.nx + self.nu         # 评估维度 12+4 四元数 13+4
         self.ny_e = self.nx                 # 终端评估维度（终端误差）
 
         # set ocp_npl_dimensions
@@ -48,15 +50,15 @@ class NMPC_Controller:
         self.max_speed = 2e+03
         self.min_speed = 150
 
-        # 权重设置
+        # 权重设置 # // TODO 权重需要更改
         # Q = np.eye(self.nx) # 状态权重
         Q = np.diag([   200.0,  200.0,  500.0, 
                         200,      200,      200,
-                        100,      100,      100,
+                        100,      100,      100,    100,
                         50,   50,   50])        
         R = np.eye(self.nu) # 控制权重
         R = np.diag([1e-5, 1e-5, 1e-5, 1e-5])
-        # R = np.diag([1e-2, 1e-2, 1e-2, 1e-2])
+        # R = np.diag([6e-2, 6e-2, 6e-2, 6e-2])
         self.ocp.cost.W = scipy.linalg.block_diag(Q, R)
 
         Vx = np.zeros((self.ny, self.nx))
@@ -64,35 +66,38 @@ class NMPC_Controller:
         self.ocp.cost.Vx = Vx
 
         Vu = np.zeros((self.ny, self.nu))
-        Vu[12,0] = 1.0
-        Vu[13,1] = 1.0
-        Vu[14,2] = 1.0
-        Vu[15,3] = 1.0
+        Vu[self.nx, 0] = 1.0
+        Vu[self.nx+1, 1] = 1.0
+        Vu[self.nx+2, 2] = 1.0
+        Vu[self.nx+3, 3] = 1.0
         self.ocp.cost.Vu = Vu
 
-        self.ocp.cost.W_e = Q
+        self.ocp.cost.W_e = 50.0 * Q
+        # self.ocp.cost.W_e = Q
 
         Vx_e = np.zeros((self.ny_e, self.nx))
         Vx_e = np.diag([    1.0,    1.0,    1.0,
                             1.0,    1.0,    1.0,
-                            1.0,    1.0,    1.0,
+                            1.0,    1.0,    1.0,    1.0,
                             1.0,    1.0,    1.0,])
         self.ocp.cost.Vx_e = Vx_e
 
         # 过程参考向量(状态+输入) ref 这里是参考值初始化
         self.ocp.cost.yref = np.array([
-                0.0, 0.0, 0.0,   # 位置 (x, y, z)
-                0.0, 0.0, 0.0,   # 速度 (vx, vy, vz)
-                0.0, 0.0, 0.0,   # 欧拉角 (phi, theta, psi)
+                0.0, 0.0, 0.0,          # 位置 (x, y, z)
+                0.0, 0.0, 0.0,          # 速度 (vx, vy, vz)
+                1.0, 0.0, 0.0,  0.0,    # 四元数 (qw, qx ,qy, qz)
+                # 0.0, 0.0, 0.0,          # 欧拉角 (phi, theta, psi)
                 0.0, 0.0, 0.0,   # 角速度 (p, q, r)
                 self.hov_w, self.hov_w, self.hov_w, self.hov_w  # 输入 (w1, w2, w3, w4)
                 ])
         # 终端参考向量(状态)
         self.ocp.cost.yref_e = np.array([
-                0.0, 0.0, 0.0,   # 位置 (x, y, z)
-                0.0, 0.0, 0.0,   # 速度 (vx, vy, vz)
-                0.0, 0.0, 0.0,   # 欧拉角 (phi, theta, psi)
-                0.0, 0.0, 0.0    # 角速度 (p, q, r)
+                0.0, 0.0, 0.0,          # 位置 (x, y, z)
+                0.0, 0.0, 0.0,          # 速度 (vx, vy, vz)
+                1.0, 0.0, 0.0,  0.0,    # 四元数 (qw, qx ,qy, qz)
+                # 0.0, 0.0, 0.0,          # 欧拉角 (phi, theta, psi)
+                0.0, 0.0, 0.0,   # 角速度 (p, q, r)
                 ])
         
         # 构建约束
@@ -102,10 +107,11 @@ class NMPC_Controller:
         self.ocp.constraints.ubu = np.array([+self.max_speed,+self.max_speed,+self.max_speed,+self.max_speed])  
         # 初始状态
         self.ocp.constraints.x0  = np.array([
-                0.0, 0.0, 0.0,   # 位置 (x, y, z)
-                0.0, 0.0, 0.0,   # 速度 (vx, vy, vz)
-                0.0, 0.0, 0.0,   # 欧拉角 (phi, theta, psi)
-                0.0, 0.0, 0.0    # 角速度 (p, q, r)
+                0.0, 0.0, 0.0,          # 位置 (x, y, z)
+                0.0, 0.0, 0.0,          # 速度 (vx, vy, vz)
+                1.0, 0.0, 0.0,  0.0,    # 四元数 (qw, qx ,qy, qz)
+                # 0.0, 0.0, 0.0,          # 欧拉角 (phi, theta, psi)
+                0.0, 0.0, 0.0,   # 角速度 (p, q, r)
         ])  
         # 所有电机转速参与评估
         self.ocp.constraints.idxbu = np.array([0, 1, 2, 3])  
@@ -126,8 +132,8 @@ class NMPC_Controller:
         print("NMPC Controller Init Done!")
 
     # 状态空间位点控制
-    # current_state:    [x, y, z, vx, vy, vz, phi, theta, psi, p, q, r] 
-    # target_state:     [x, y, z, vx, vy, vz, phi, theta, psi, p, q, r] 
+    # // current_state,  target_state:    [x, y, z, vx, vy, vz, phi, theta, psi, p, q, r] 
+    # current_state,  target_state:    [x, y, z, vx, vy, vz, qw, qx, qy, qz, p, q, r] 
     def nmpc_state_control(self, current_state, target_state):
         _start = time.perf_counter()
         # Set initial condition, equality constraint
@@ -156,14 +162,14 @@ class NMPC_Controller:
         f = Ct * (w_opt_acados[:, 0]**2 + w_opt_acados[:, 1]**2 + w_opt_acados[:, 2]**2 + w_opt_acados[:, 3]**2)
         # print("Thrust (f):", f)
         # print(w_opt_acados)
-        controls = w_opt_acados[0]**2*self.Ct
+        controls = w_opt_acados[0]**2 * self.Ct
         # return _dt, w_opt_acados[0], x_opt_acados  # 返回最近控制输入 4 Vector(速度)
         return _dt, controls, x_opt_acados  # 返回最近控制输入 4 Vector(速度)
     
         # NMPC位置控制
     # goal_pos: 目标三维位置[x y z yaw]
     def nmpc_position_control(self, current_state, goal_pos):
-        target_state = np.array([goal_pos[0], goal_pos[1], goal_pos[2], 0.0, 0.0, 0.0, 0.0, 0.0, goal_pos[3], 0.0, 0.0, 0.0])
+        target_state = np.array([goal_pos[0], goal_pos[1], goal_pos[2], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         _dt, control, x_opt_acados = self.nmpc_state_control(current_state, target_state)
         return _dt, control
     
@@ -173,8 +179,8 @@ class NMPC_Controller:
 if __name__ == '__main__':
     
     nmpc_controller = NMPC_Controller()
-    cur_state = np.array([0,0,1,0,0,0,0,0,0,0,0,0])
-    tar_pos = np.array([0,0,20,0,0,0,0,0,0,0,0,0])
+    cur_state = np.array([0,0,1,0,0,0,0,0,0,0,0,0,0])
+    tar_pos = np.array([0,0,20,0,0,0,0,0,0,0,0,0,0])
     _dt, w,x_opt_acados = nmpc_controller.nmpc_state_control(cur_state, tar_pos)
 
     print(w)
