@@ -3,13 +3,19 @@
 #include <ros/ros.h>
 #include <thread>
 #include <mav_msgs/QuadCurState.h>
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
 
 namespace acados_ros{
     void UnityCallback(const mav_msgs::QuadThrusts::ConstPtr &msg);
+    void Timer_callback(const ros::TimerEvent& e);
     // 订阅
     ros::Subscriber QuadThrusts_sub;
+    
     // 发布
     ros::Publisher QuadCurStates_pub;
+    ros::Publisher Oritantion_pub;
+    image_transport::Publisher rgb_pub;
     
     void quaternionToEuler(double q_w, double q_x, double q_y, double q_z, double &roll, double &pitch, double &yaw) {
         // 计算 Roll (X 轴旋转)

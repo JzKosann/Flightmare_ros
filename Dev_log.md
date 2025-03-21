@@ -41,3 +41,12 @@
 -  完善了Dynamic 方程和 `model.py`，随后需要进行测试，
 
   参考代码：https://github.com/LGQWakkk/Quadrotor-NMPC-Control/blob/main/export_model.py
+
+
+## 2025.3.21
+
+- 完善了无人机自旋问题，诊断为参数问题，还需要在协调一下
+
+- 添加轨迹
+  - 引入合适的轨迹，用nmpc进行跟踪
+  - 尝试`minimum_snap`?（但是在flightmare中生成的轨迹没有朝向赛道门）

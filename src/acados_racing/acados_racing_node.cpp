@@ -35,46 +35,16 @@ std::shared_ptr<UnityBridge> unity_bridge_ptr = UnityBridge::getInstance();
 QuadState quad_state;
 Command quad_command;
 std::shared_ptr<Quadrotor> quad_ptr = std::make_shared<Quadrotor>();
+std::shared_ptr<RGBCamera> rgb_camera = std::make_shared<RGBCamera>();
 
-
-// void render_process()
-// {
-//     ros::Rate loop_rate(10);
-//     while (ros::ok())
-//     {
-//         // 发布无人机状态信息
-//         quad_ptr->getState(&quad_state);
-//         mav_msgs::QuadCurState quad_state_msg;
-//         quad_state_msg.x = quad_state.x[QS::POSX];
-//         quad_state_msg.y = quad_state.x[QS::POSY];
-//         quad_state_msg.z = quad_state.x[QS::POSZ];
-//         quad_state_msg.vx = quad_state.x[QS::VELX];
-//         quad_state_msg.vy = quad_state.x[QS::VELY];
-//         quad_state_msg.vz = quad_state.x[QS::VELZ];
-//         double phi, theta, psi;
-//         acados_ros::quaternionToEuler(quad_state.x[QS::ATTW], quad_state.x[QS::ATTX], quad_state.x[QS::ATTY], quad_state.x[QS::ATTZ],
-//                                       phi, theta, psi);
-//         quad_state_msg.phi = phi;
-//         quad_state_msg.theta = theta;
-//         quad_state_msg.psi = psi;
-//         quad_state_msg.p = quad_state.x[QS::OMEX];
-//         quad_state_msg.q = quad_state.x[QS::OMEY];
-//         quad_state_msg.r = quad_state.x[QS::OMEZ];
-//         ros::Time Unity_time = ros::Time::now();
-//         quad_state_msg.time = Unity_time.toSec();
-//         acados_ros::QuadCurStates_pub.publish(quad_state_msg);
-//         // unity_bridge_ptr->getRender(0);
-//         // unity_bridge_ptr->handleOutput();
-//         ROS_INFO("threading");
-//         loop_rate.sleep();
-//     }
-// }
 
 void acados_ros::UnityCallback(const mav_msgs::QuadThrusts::ConstPtr &msg)
 {
-
+    static uint32_t seq_i;
+    seq_i++;
     Scalar t = 0.0;
-    Vector<4> thrusts{msg->thrusts_1, msg->thrusts_2, msg->thrusts_3, msg->thrusts_4};
+    Vector<4> thrusts{msg->thrusts_1, msg->thrusts_2, msg->thrusts_3, msg->thrusts_4}; 
+    // Vector<4> thrusts{2.490,2.49,2.49,2.49};
     Command cmd(t, thrusts);
     Scalar ctl_dt = 0.01;
     // 检查命令是否有效
@@ -103,17 +73,45 @@ void acados_ros::UnityCallback(const mav_msgs::QuadThrusts::ConstPtr &msg)
     quad_state_msg.qw = quad_state.x[QS::ATTW];
     quad_state_msg.qx = quad_state.x[QS::ATTX];
     quad_state_msg.qy = quad_state.x[QS::ATTY];
-    quad_state_msg.qz = quad_state.x[QS::ATTZ];;
+    quad_state_msg.qz = quad_state.x[QS::ATTZ];
     quad_state_msg.p = quad_state.x[QS::OMEX];
     quad_state_msg.q = quad_state.x[QS::OMEY];
     quad_state_msg.r = quad_state.x[QS::OMEZ];
-    // ros::Time Unity_time = ros::Time::now();
-    // quad_state_msg.time = Unity_time.toSec();
+    ros::Time Unity_time = ros::Time::now();
+    quad_state_msg.time = Unity_time.toSec();
     acados_ros::QuadCurStates_pub.publish(quad_state_msg);
 
-    ROS_INFO("get pose info! %f, %f, %f", quad_state.x[QS::VELX],quad_state.x[QS::VELY],quad_state.x[QS::VELZ]);
+    geometry_msgs::PoseStamped pose_msg;
+    pose_msg.pose.orientation.w = quad_state_msg.qw;
+    pose_msg.pose.orientation.x = quad_state_msg.qx;
+    pose_msg.pose.orientation.y = quad_state_msg.qy;
+    pose_msg.pose.orientation.z = quad_state_msg.qz;
+    pose_msg.pose.position.x = quad_state_msg.x;
+    pose_msg.pose.position.y = quad_state_msg.y;
+    pose_msg.pose.position.z = quad_state_msg.z;
+    pose_msg.header.stamp = Unity_time;
+    pose_msg.header.frame_id = "world";
+    pose_msg.header.seq = seq_i;
+    // pose_msg.header.seq=
+    acados_ros::Oritantion_pub.publish(pose_msg);
+
+
+    ROS_INFO("get pose info! %f, %f, %f, %f", quad_state.x[QS::VELX], quad_state.x[QS::VELY], quad_state.x[QS::VELZ],
+             Unity_time.toSec());
     unity_bridge_ptr->getRender(0);
     unity_bridge_ptr->handleOutput();
+    // cv::Mat img;
+    // rgb_camera->getRGBImage(img);
+    // sensor_msgs::ImagePtr rgb_msg =
+    //     cv_bridge::CvImage(std_msgs::Header(), "bgr8", img).toImageMsg();
+    // ros::Time timestamp = ros::Time::now();
+    // rgb_msg->header.stamp = timestamp;
+    // acados_ros::rgb_pub.publish(rgb_msg);
+    // ROS_INFO("img sent!");
+}
+
+void acados_ros::Timer_callback(const ros::TimerEvent& e){
+   
 }
 
 // static void InitializeEnv() {}
@@ -128,15 +126,17 @@ int main(int argc, char *argv[])
     // 创建订阅者 订阅发布的控制预期位置
     acados_ros::QuadThrusts_sub = nh.subscribe("flightmare_control/thrusts", 1, acados_ros::UnityCallback);
     acados_ros::QuadCurStates_pub = nh.advertise<mav_msgs::QuadCurState>("flightmare_control/state_info", 1);
+    acados_ros::Oritantion_pub = nh.advertise<geometry_msgs::PoseStamped>("flightmare_control/Oritantion", 1);
+
+    image_transport::ImageTransport it(pnh);
+    acados_ros::rgb_pub = it.advertise("/flightmare_control/rgb", 1);
     // 创建发布者
     // unity 场景设置--------------------------------------------------------------------------//
     // Flightmare(Unity3D)
     SceneID scene_id{UnityScene::WAREHOUSE}; // INDUSTRIAL
     bool unity_ready{false};
     // unity quadrotor
-    // initialization
-    quad_state.setZero();
-    quad_ptr->reset(quad_state);
+    
     Vector<3> quad_size(0.5, 0.5, 0.5);
     quad_ptr->setSize(quad_size);
 
@@ -178,20 +178,17 @@ int main(int argc, char *argv[])
     // unity 场景设置--------------------------------------------------------------------------//
 
     // Initialize camera
-    image_transport::Publisher rgb_pub;
-    image_transport::ImageTransport it(pnh);
-    rgb_pub = it.advertise("/rgb", 1);
-    std::shared_ptr<RGBCamera> rgb_camera = std::make_shared<RGBCamera>();
     Vector<3> B_r_BC(0.0, 0.0, 0.3);
     Matrix<3, 3> R_BC = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
     std::cout << R_BC << std::endl;
     rgb_camera->setFOV(90);
     rgb_camera->setWidth(640);
-    rgb_camera->setHeight(480);
+    rgb_camera->setHeight(360);
     rgb_camera->setRelPose(B_r_BC, R_BC);
     rgb_camera->setPostProcesscing(std::vector<bool>{
         false, false, false}); // depth, segmentation, optical flow
     quad_ptr->addRGBCamera(rgb_camera);
+    
 
     // Start racing
     ros::Time t0 = ros::Time::now();
@@ -203,11 +200,16 @@ int main(int argc, char *argv[])
     unity_bridge_ptr->addStaticObject(gate_5);
     unity_bridge_ptr->addQuadrotor(quad_ptr);
     mav_msgs::QuadCurState quad_state_msg;
-    for (int cnt; cnt <= 500; cnt++)// 轮发 唤醒py
-            acados_ros::QuadCurStates_pub.publish(quad_state_msg);
+    // for (int cnt; cnt <= 500; cnt++)// 轮发 唤醒py
+    //         acados_ros::QuadCurStates_pub.publish(quad_state_msg);
     ROS_INFO("aroused!");
+    // initialization
+    quad_state.setZero();
+    quad_ptr->reset(quad_state);
     // connect unity
     unity_ready = unity_bridge_ptr->connectUnity(scene_id);
+
+    ros::Timer timer = nh.createTimer(ros::Duration(0.005), acados_ros::Timer_callback);
 
     FrameID frame_id = 0;
 
