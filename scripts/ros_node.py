@@ -55,10 +55,10 @@ if __name__ == '__main__':
                                 0,0,0,
                                 1,0,0,0,
                                 0,0,0])
-            start_pos = [0, 0, 0]
-            tar_poss = [5,5,5]
-            path_msg = generate_path(start_pos,tar_poss)
-            quad_path_pub.publish(path_msg)
+            # start_pos = [0, 0, 0]
+            # tar_poss = [5,5,5]
+            # path_msg = generate_path(start_pos,tar_poss)
+            # quad_path_pub.publish(path_msg)
             
             # --- quadrotor control --- #
             _dt, w, x_opt_acados = nmpc_controller.nmpc_state_control(current_state=cur_state, target_state=tar_pos)

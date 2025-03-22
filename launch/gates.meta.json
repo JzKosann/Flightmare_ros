@@ -1,0 +1,57 @@
+{
+    "$schema": "https://foxglove.dev/schemas/visualization/meta.json",
+    "coordinateSystems": [{ "id": "world" }],
+    "primitives": [
+      {
+        "type": "image",
+        "pose": {
+          "position": { "x": -10, "y": 10, "z": 2.5 },
+          "orientation": { "x": 0.0, "y": 0.0, "z": 0.7071, "w": 0.7071 }
+        },
+        "imageUrl": "https://yourcdn.com/gates/gate1.png",
+        "dimensions": { "x": 5.0, "y": 5.0 },
+        "coordinateSystem": "world"
+      },
+      {
+        "type": "image",
+        "pose": {
+          "position": { "x": -10, "y": -10, "z": 2.5 },
+          "orientation": { "x": 0.0, "y": 0.0, "z": 0.256, "w": 0.966 }
+        },
+        "imageUrl": "https://yourcdn.com/gates/gate2.png",
+        "dimensions": { "x": 5.0, "y": 5.0 },
+        "coordinateSystem": "world"
+      },
+      {
+        "type": "image",
+        "pose": {
+          "position": { "x": 0, "y": -10, "z": 2.5 },
+          "orientation": { "x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0 }
+        },
+        "imageUrl": "https://yourcdn.com/gates/gate3.png",
+        "dimensions": { "x": 5.0, "y": 5.0 },
+        "coordinateSystem": "world"
+      },
+      {
+        "type": "image",
+        "pose": {
+          "position": { "x": 10, "y": -10, "z": 2.5 },
+          "orientation": { "x": 0.0, "y": 0.0, "z": 0.3827, "w": 0.9239 }
+        },
+        "imageUrl": "https://yourcdn.com/gates/gate4.png",
+        "dimensions": { "x": 5.0, "y": 5.0 },
+        "coordinateSystem": "world"
+      },
+      {
+        "type": "image",
+        "pose": {
+          "position": { "x": 10, "y": 0, "z": 2.5 },
+          "orientation": { "x": 0.0, "y": 0.0, "z": 0.7071, "w": 0.7071 }
+        },
+        "imageUrl": "https://yourcdn.com/gates/gate5.png",
+        "dimensions": { "x": 5.0, "y": 5.0 },
+        "coordinateSystem": "world"
+      }
+    ]
+  }
+  
