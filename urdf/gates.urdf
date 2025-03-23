@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<robot name="rpg_gate_group">
+
+  <link name="world"/>
+
+  <!-- Gate 1 -->
+  <link name="gate_1">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://acados_nmpc_controller/asset/RPGgate.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint name="joint_gate_1" type="fixed">
+    <parent link="world"/>
+    <child link="gate_1"/>
+    <origin xyz="-10 10 2.5" rpy="0 0 1.5708"/>
+  </joint>
+
+  <!-- Gate 2 -->
+  <link name="gate_2">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://acados_nmpc_controller/asset/RPGgate.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint name="joint_gate_2" type="fixed">
+    <parent link="world"/>
+    <child link="gate_2"/>
+    <origin xyz="-10 -10 2.5" rpy="0 0 0.519"/>
+  </joint>
+
+  <!-- Gate 3 -->
+  <link name="gate_3">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://acados_nmpc_controller/asset/RPGgate.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint name="joint_gate_3" type="fixed">
+    <parent link="world"/>
+    <child link="gate_3"/>
+    <origin xyz="0 -10 2.5" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Gate 4 -->
+  <link name="gate_4">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://acados_nmpc_controller/asset/RPGgate.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint name="joint_gate_4" type="fixed">
+    <parent link="world"/>
+    <child link="gate_4"/>
+    <origin xyz="10 -10 2.5" rpy="0 0 0.785"/>
+  </joint>
+
+  <!-- Gate 5 -->
+  <link name="gate_5">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://acados_nmpc_controller/asset/RPGgate.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint name="joint_gate_5" type="fixed">
+    <parent link="world"/>
+    <child link="gate_5"/>
+    <origin xyz="10 0 2.5" rpy="0 0 1.5708"/>
+  </joint>
+
+</robot>

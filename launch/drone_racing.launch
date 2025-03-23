@@ -1,7 +1,15 @@
 <launch>
     <arg name="debug" default="0" />
     <arg name="use_unity_editor" default="false" />
-    <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find acados_nmpc_controller)/launch/records.rviz" output="screen" /> -->
+
+    <!-- 1. 加载 URDF 文件为 /robot_description 参数 -->
+    <param name="robot_description" 
+       command="$(find xacro)/xacro '$(find acados_nmpc_controller)/urdf/gates.urdf'" />
+    <!-- 2. 发布 TF 变换（由 URDF 中的 joint 提供） -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen" />
+    <!--
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find acados_nmpc_controller)/rviz/gate_display.rviz" />
+    -->
     <node name="foxglove_scope" pkg="foxglove_bridge" type="foxglove_bridge" output="screen" />
     <!-- RPG Flightmare Unity Render. -->
     <node pkg="flightrender" type="RPG_Flightmare.x86_64" name="rpg_flightmare_render" unless="$(arg use_unity_editor)">

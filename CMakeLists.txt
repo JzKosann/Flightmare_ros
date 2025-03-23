@@ -63,4 +63,6 @@ catkin_install_python(PROGRAMS
   scripts/ros_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
-
+# 安装贴图
+install(DIRECTORY asset/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/asset)
