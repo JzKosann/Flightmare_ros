@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <robot name="rpg_gate_group">
 
+  <!-- 根坐标系 world -->
   <link name="world"/>
 
   <!-- Gate 1 -->
@@ -8,14 +9,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://acados_nmpc_controller/asset/RPGgate.stl" scale="1 1 1"/>
+        <mesh filename="package://acados_nmpc_controller/asset/RPGgate.dae" scale="1 1 1"/>
       </geometry>
     </visual>
   </link>
   <joint name="joint_gate_1" type="fixed">
     <parent link="world"/>
     <child link="gate_1"/>
-    <origin xyz="-10 10 2.5" rpy="0 0 1.5708"/>
+    <origin xyz="-2 8 2.5" rpy="0 0 -0.34"/>
   </joint>
 
   <!-- Gate 2 -->
@@ -23,14 +24,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://acados_nmpc_controller/asset/RPGgate.stl" scale="1 1 1"/>
+        <mesh filename="package://acados_nmpc_controller/asset/RPGgate.dae" scale="1 1 1"/>
       </geometry>
     </visual>
   </link>
   <joint name="joint_gate_2" type="fixed">
     <parent link="world"/>
     <child link="gate_2"/>
-    <origin xyz="-10 -10 2.5" rpy="0 0 0.519"/>
+    <origin xyz="9 9 2.5" rpy="0 0 -2.355"/>
   </joint>
 
   <!-- Gate 3 -->
@@ -38,14 +39,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://acados_nmpc_controller/asset/RPGgate.stl" scale="1 1 1"/>
+        <mesh filename="package://acados_nmpc_controller/asset/RPGgate.dae" scale="1 1 1"/>
       </geometry>
     </visual>
   </link>
   <joint name="joint_gate_3" type="fixed">
     <parent link="world"/>
     <child link="gate_3"/>
-    <origin xyz="0 -10 2.5" rpy="0 0 0"/>
+    <origin xyz="10 0 2.5" rpy="0 0 3.14"/>
   </joint>
 
   <!-- Gate 4 -->
@@ -53,14 +54,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://acados_nmpc_controller/asset/RPGgate.stl" scale="1 1 1"/>
+        <mesh filename="package://acados_nmpc_controller/asset/RPGgate.dae" scale="1 1 1"/>
       </geometry>
     </visual>
   </link>
   <joint name="joint_gate_4" type="fixed">
     <parent link="world"/>
     <child link="gate_4"/>
-    <origin xyz="10 -10 2.5" rpy="0 0 0.785"/>
+    <origin xyz="8 -8 2.5" rpy="0 0 2.07"/>
   </joint>
 
   <!-- Gate 5 -->
@@ -68,14 +69,44 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://acados_nmpc_controller/asset/RPGgate.stl" scale="1 1 1"/>
+        <mesh filename="package://acados_nmpc_controller/asset/RPGgate.dae" scale="1 1 1"/>
       </geometry>
     </visual>
   </link>
   <joint name="joint_gate_5" type="fixed">
     <parent link="world"/>
     <child link="gate_5"/>
-    <origin xyz="10 0 2.5" rpy="0 0 1.5708"/>
+    <origin xyz="0 -10 2.5" rpy="0 0 1.5708"/>
+  </joint>
+
+  <!-- Gate 6 -->
+  <link name="gate_6">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://acados_nmpc_controller/asset/RPGgate.dae" scale="1 1 1"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint name="joint_gate_6" type="fixed">
+    <parent link="world"/>
+    <child link="gate_6"/>
+    <origin xyz="-8 -7 6.2" rpy="0 0 1.2308"/>
+  </joint>
+
+  <!-- Gate 7 -->
+  <link name="gate_7">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://acados_nmpc_controller/asset/RPGgate.dae" scale="1 1 1"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint name="joint_gate_7" type="fixed">
+    <parent link="world"/>
+    <child link="gate_7"/>
+    <origin xyz="-8 -7 2.5" rpy="0 0 1.2308"/>
   </joint>
 
 </robot>

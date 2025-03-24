@@ -40,7 +40,11 @@ if __name__ == '__main__':
     rospy.init_node('acados_py',anonymous=True)
     ros_init()
     rate = rospy.Rate(100)
-    
+    trajectory = generate_path()
+    target_reach_threshold = 0.3
+    # index_ahead = 10
+    index = 0
+    last_time = rospy.get_rostime().to_sec()
     while not rospy.is_shutdown():
 
         if is_get_state:
@@ -51,24 +55,35 @@ if __name__ == '__main__':
                                 quad_state.qw, quad_state.qx, quad_state.qy, quad_state.qz,
                                 #   quad_state.phi, quad_state.theta, quad_state.psi,
                                 quad_state.p, quad_state.q, quad_state.r])
-            tar_pos = np.array([5,5,5,
-                                0,0,0,
-                                1,0,0,0,
+            cur_pos = np.array([quad_state.x, quad_state.y, quad_state.z])
+            distances = [np.linalg.norm(np.array(pos)-cur_pos) for pos, _, _ in trajectory]
+            closest_idx = np.argmin(distances)
+
+            tar_pos, tar_vel, tar_quat = trajectory[min(closest_idx + 5, len(trajectory)-1)]
+            print(f"Tracking Point {index}: {tar_pos}")
+            target_pos = np.array([tar_pos[0],tar_pos[1],tar_pos[2],
+                                tar_vel[0],tar_vel[1],tar_vel[2],
+                                # 0,0,0,
+                                tar_quat[3],tar_quat[0],tar_quat[1],tar_quat[2],
+                                # 1,0,0,0,
                                 0,0,0])
-            # start_pos = [0, 0, 0]
-            # tar_poss = [5,5,5]
-            # path_msg = generate_path(start_pos,tar_poss)
-            # quad_path_pub.publish(path_msg)
-            
+            # target_pos = np.array([8,-8,2.5,
+            #                     # tar_vel[0],tar_vel[1],tar_vel[2],
+            #                     0,0,0,
+            #                     # tar_quat[3],tar_quat[0],tar_quat[1],tar_quat[2],
+            #                     1,0,0,0,
+            #                     0,0,0])
             # --- quadrotor control --- #
-            _dt, w, x_opt_acados = nmpc_controller.nmpc_state_control(current_state=cur_state, target_state=tar_pos)
+            _dt, w, x_opt_acados = nmpc_controller.nmpc_state_control(current_state=cur_state, target_state=target_pos)
             quad_thrusts_msg.thrusts_1 = w[0]
             quad_thrusts_msg.thrusts_2 = w[1]
             quad_thrusts_msg.thrusts_3 = w[2]
             quad_thrusts_msg.thrusts_4 = w[3]
 
-            current_time = rospy.get_rostime().to_sec
-            print(f"Thrust:[{w[0]},{w[1]},{w[2]},{w[3]}], time {current_time}")
+            current_time = rospy.get_rostime().to_sec()
+            print(f"Thrust:[{w[0]},{w[1]},{w[2]},{w[3]}]")
+            print(f"delay {(current_time - last_time)*1000}ms")
+            last_time = current_time
             is_get_state = False
             quad_thrusts_pub.publish(quad_thrusts_msg)
         else:
@@ -81,4 +96,4 @@ if __name__ == '__main__':
 
         
         # test_print()
-        rate.sleep()
+        # rate.sleep()

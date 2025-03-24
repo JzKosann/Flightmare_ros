@@ -7,21 +7,21 @@ from tf.transformations import quaternion_from_matrix
 from scipy.interpolate import CubicSpline
 
 # 🧭 根据速度向量计算“朝前”飞行姿态（四元数）
-def compute_orientation_from_velocity(velocity, up=np.array([0, 0, 1])):
-    x_axis = velocity / (np.linalg.norm(velocity) + 1e-6)
+def compute_orientation_from_fixed_direction(direction, up=np.array([0, 0, 1])):
+    x_axis = direction / (np.linalg.norm(direction) + 1e-6)
     y_axis = np.cross(up, x_axis)
     y_axis /= (np.linalg.norm(y_axis) + 1e-6)
     z_axis = np.cross(x_axis, y_axis)
     z_axis /= (np.linalg.norm(z_axis) + 1e-6)
 
     R = np.eye(4)
-    R[0:3, 0] = x_axis
-    R[0:3, 1] = y_axis
-    R[0:3, 2] = z_axis
+    R[0:3, 0] = x_axis  # 红色：前向
+    R[0:3, 1] = y_axis  # 绿色：左向
+    R[0:3, 2] = z_axis  # 蓝色：上向
     return quaternion_from_matrix(R)
 
-# 📈 使用三次样条生成近似 minimum snap 轨迹 + 姿态（可扩展为多项式优化器）
-def generate_trajectory(waypoints, num_points=200):
+
+def generate_trajectory(waypoints, num_points=200, desired_speed=2.0):
     waypoints = np.array(waypoints)
     t = np.linspace(0, 1, len(waypoints))
     T = np.linspace(0, 1, num_points)
@@ -32,11 +32,25 @@ def generate_trajectory(waypoints, num_points=200):
 
     trajectory = []
     for ti in T:
+        # 位置
         pos = np.array([x_spline(ti), y_spline(ti), z_spline(ti)])
-        vel = np.array([x_spline(ti, 1), y_spline(ti, 1), z_spline(ti, 1)])
-        quat = compute_orientation_from_velocity(vel)
-        trajectory.append((pos, quat))
+
+        # 切线方向（轨迹速度方向）
+        dx = x_spline(ti, 1)
+        dy = y_spline(ti, 1)
+        dz = z_spline(ti, 1)
+        direction = np.array([dx, dy, dz])
+        norm = np.linalg.norm(direction) + 1e-6
+        velocity = desired_speed * (direction / norm)
+
+        # 姿态四元数
+        quat = compute_orientation_from_fixed_direction(direction)
+
+        # 每个点现在包含：位置、速度、姿态
+        trajectory.append((pos, velocity, quat))
     return trajectory
+
+
 
 # 🚀 发布 ROS Path 消息（循环发布）
 def publish_path(trajectory):
@@ -47,7 +61,7 @@ def publish_path(trajectory):
     path_msg = Path()
     path_msg.header.frame_id = "world"
 
-    for pos, quat in trajectory:
+    for pos, _,quat in trajectory:
         pose = PoseStamped()
         pose.header.frame_id = "world"
         pose.pose.position.x = pos[0]
@@ -66,14 +80,33 @@ def publish_path(trajectory):
         print("sent!")
         rate.sleep()
 
+def generate_path():
+    waypoints = [
+        [0,0,0],
+        [-2, 8, 2.5],
+        [9, 9, 2.5],
+        [10, 0, 2.5],
+        [8.0, -8.0, 2.5],
+        [0, -10.0, 2.5],
+        [-8, -7, 6.2],
+        [-8, -7, 2.5],
+        [-8, -7, 6.2]
+    ]
+    trajectory = generate_trajectory(waypoints, num_points=150)
+    return trajectory
+
 # 🏁 主函数：定义赛道门 + 执行轨迹生成与发布
 if __name__ == "__main__":
     waypoints = [
-        [-10.0, 10.0, 2.5],
-        [-10.0, -10.0, 2.5],
-        [0.0, -10.0, 2.5],
-        [10.0, -10.0, 2.5],
-        [10.0, 0.0, 2.5]
+        [0,0,0],
+        [-2, 8, 2.5],
+        [9, 9, 2.5],
+        [10, 0, 2.5],
+        [8.0, -8.0, 2.5],
+        [0, -10.0, 2.5],
+        [-8, -7, 6.2],
+        [-8, -7, 2.5],
+        [-8, -7, 6.2]
     ]
     trajectory = generate_trajectory(waypoints, num_points=150)
     publish_path(trajectory)

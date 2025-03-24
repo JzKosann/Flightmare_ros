@@ -37,13 +37,13 @@ Command quad_command;
 std::shared_ptr<Quadrotor> quad_ptr = std::make_shared<Quadrotor>();
 std::shared_ptr<RGBCamera> rgb_camera = std::make_shared<RGBCamera>();
 
-
 void acados_ros::UnityCallback(const mav_msgs::QuadThrusts::ConstPtr &msg)
 {
     static uint32_t seq_i;
+    static ros::Time last_time;
     seq_i++;
     Scalar t = 0.0;
-    Vector<4> thrusts{msg->thrusts_1, msg->thrusts_2, msg->thrusts_3, msg->thrusts_4}; 
+    Vector<4> thrusts{msg->thrusts_1, msg->thrusts_2, msg->thrusts_3, msg->thrusts_4};
     // Vector<4> thrusts{2.490,2.49,2.49,2.49};
     Command cmd(t, thrusts);
     Scalar ctl_dt = 0.01;
@@ -95,9 +95,10 @@ void acados_ros::UnityCallback(const mav_msgs::QuadThrusts::ConstPtr &msg)
     // pose_msg.header.seq=
     acados_ros::Oritantion_pub.publish(pose_msg);
 
-
-    ROS_INFO("get pose info! %f, %f, %f, %f", quad_state.x[QS::VELX], quad_state.x[QS::VELY], quad_state.x[QS::VELZ],
-             Unity_time.toSec());
+    ROS_INFO("get pose info! %f, %f, %f", quad_state.x[QS::POSX], quad_state.x[QS::POSY], quad_state.x[QS::POSZ]);
+    
+    ROS_INFO("delay: %f ms", (Unity_time.toSec() - last_time.toSec()) * 1000);
+    last_time = Unity_time;
     unity_bridge_ptr->getRender(0);
     unity_bridge_ptr->handleOutput();
     // cv::Mat img;
@@ -110,8 +111,8 @@ void acados_ros::UnityCallback(const mav_msgs::QuadThrusts::ConstPtr &msg)
     // ROS_INFO("img sent!");
 }
 
-void acados_ros::Timer_callback(const ros::TimerEvent& e){
-   
+void acados_ros::Timer_callback(const ros::TimerEvent &e)
+{
 }
 
 // static void InitializeEnv() {}
@@ -136,7 +137,7 @@ int main(int argc, char *argv[])
     SceneID scene_id{UnityScene::WAREHOUSE}; // INDUSTRIAL
     bool unity_ready{false};
     // unity quadrotor
-    
+
     Vector<3> quad_size(0.5, 0.5, 0.5);
     quad_ptr->setSize(quad_size);
 
@@ -144,36 +145,50 @@ int main(int argc, char *argv[])
     std::string prefab_id = "rpg_gate";
     std::shared_ptr<StaticObject> gate_1 =
         std::make_shared<StaticObject>(object_id, prefab_id);
-    gate_1->setPosition(Eigen::Vector3f(-10, 10, 2.5));
+    gate_1->setPosition(Eigen::Vector3f(-2, 8, 2.5));
     gate_1->setQuaternion(
-        Quaternion(std::cos(1 * M_PI_4), 0.0, 0.0, std::sin(1 * M_PI_4)));
+        Quaternion(0.9855, 0.0, 0.0, -0.1690));
 
     std::string object_id_2 = "unity_gate_2";
     std::shared_ptr<StaticGate> gate_2 =
         std::make_shared<StaticGate>(object_id_2);
-    gate_2->setPosition(Eigen::Vector3f(-10, -10.0, 2.5));
+    gate_2->setPosition(Eigen::Vector3f(9, 9, 2.5));
     gate_2->setQuaternion(
-        Quaternion(std::cos(0.33 * M_PI_4), 0.0, 0.0, std::sin(0.33 * M_PI_4)));
+        Quaternion(0.3896, 0.0000, 0.0000, -0.9209));
 
     std::string object_id_3 = "unity_gate_3";
     std::shared_ptr<StaticGate> gate_3 =
         std::make_shared<StaticGate>(object_id_3);
-    gate_3->setPosition(Eigen::Vector3f(0, -10, 2.5));
-    gate_3->setQuaternion(Quaternion(0.0, 0.0, 0.0, 1.0));
+    gate_3->setPosition(Eigen::Vector3f(10, 0, 2.5));
+    gate_3->setQuaternion(Quaternion(0.0000, 0.0000, 0.0000, 1.0000));
 
     std::string object_id_4 = "unity_gate_4";
     std::shared_ptr<StaticGate> gate_4 =
         std::make_shared<StaticGate>(object_id_4);
-    gate_4->setPosition(Eigen::Vector3f(10, -10, 2.5));
+    gate_4->setPosition(Eigen::Vector3f(8, -8, 2.5));
     gate_4->setQuaternion(
-        Quaternion(std::cos(1.25 * M_PI_4), 0.0, 0.0, std::cos(1.25 * M_PI_4)));
+        Quaternion(0.8776, 0.0000, 0.0000, -0.4794));
 
     std::string object_id_5 = "unity_gate_5";
     std::shared_ptr<StaticGate> gate_5 =
         std::make_shared<StaticGate>(object_id_5);
-    gate_5->setPosition(Eigen::Vector3f(10, 0, 2.5));
+    gate_5->setPosition(Eigen::Vector3f(0, -10, 2.5));
     gate_5->setQuaternion(
-        Quaternion(std::cos(1 * M_PI_4), 0.0, 0.0, std::sin(1 * M_PI_4)));
+        Quaternion(0.7071, 0.0000, 0.0000, 0.7071));
+
+    std::string object_id_6 = "unity_gate_6";
+    std::shared_ptr<StaticGate> gate_6 =
+        std::make_shared<StaticGate>(object_id_6);
+    gate_6->setPosition(Eigen::Vector3f(-8, -7, 6.2));
+    gate_6->setQuaternion(
+        Quaternion(0.7933, 0.0000, 0.0000, 0.6088));
+
+    std::string object_id_7 = "unity_gate_7";
+    std::shared_ptr<StaticGate> gate_7 =
+        std::make_shared<StaticGate>(object_id_7);
+    gate_7->setPosition(Eigen::Vector3f(-8, -7, 2.5));
+    gate_7->setQuaternion(
+        Quaternion(0.7933, 0.0000, 0.0000, 0.6088));
 
     // unity 场景设置--------------------------------------------------------------------------//
 
@@ -188,7 +203,6 @@ int main(int argc, char *argv[])
     rgb_camera->setPostProcesscing(std::vector<bool>{
         false, false, false}); // depth, segmentation, optical flow
     quad_ptr->addRGBCamera(rgb_camera);
-    
 
     // Start racing
     ros::Time t0 = ros::Time::now();
@@ -198,6 +212,8 @@ int main(int argc, char *argv[])
     unity_bridge_ptr->addStaticObject(gate_3);
     unity_bridge_ptr->addStaticObject(gate_4);
     unity_bridge_ptr->addStaticObject(gate_5);
+    unity_bridge_ptr->addStaticObject(gate_6);
+    unity_bridge_ptr->addStaticObject(gate_7);
     unity_bridge_ptr->addQuadrotor(quad_ptr);
     mav_msgs::QuadCurState quad_state_msg;
     // for (int cnt; cnt <= 500; cnt++)// 轮发 唤醒py
