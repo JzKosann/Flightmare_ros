@@ -60,7 +60,7 @@ void acados_ros::UnityCallback(const mav_msgs::QuadThrusts::ConstPtr &msg)
         std::cout << "Using single rotor thrusts mode." << std::endl;
         std::cout << "Thrusts: " << cmd.thrusts.transpose() << std::endl;
     }
-    // std::cout<<quad_ptr->getDynamics()<<std::endl; // 打印动态方程参数
+    std::cout<<quad_ptr->getDynamics()<<std::endl; // 打印动态方程参数
     // 发布无人机状态信息
     quad_ptr->getState(&quad_state);
     mav_msgs::QuadCurState quad_state_msg;
@@ -95,9 +95,10 @@ void acados_ros::UnityCallback(const mav_msgs::QuadThrusts::ConstPtr &msg)
     // pose_msg.header.seq=
     acados_ros::Oritantion_pub.publish(pose_msg);
 
-    ROS_INFO("get pose info! %f, %f, %f", quad_state.x[QS::POSX], quad_state.x[QS::POSY], quad_state.x[QS::POSZ]);
+    printf("pos: x:%f, y:%f, z:%f \r\nquat: w:%f, x:%f, y:%f, z:%f \r\n", quad_state.x[QS::POSX], quad_state.x[QS::POSY], quad_state.x[QS::POSZ],
+        quad_state.x[QS::ATTW], quad_state.x[QS::ATTX], quad_state.x[QS::ATTY], quad_state.x[QS::ATTZ]);
     
-    ROS_INFO("delay: %f ms", (Unity_time.toSec() - last_time.toSec()) * 1000);
+    printf("delay: %f ms \r\n", (Unity_time.toSec() - last_time.toSec()) * 1000);
     last_time = Unity_time;
     unity_bridge_ptr->getRender(0);
     unity_bridge_ptr->handleOutput();

@@ -54,13 +54,8 @@ def generate_trajectory(waypoints, num_points=200, desired_speed=2.0):
 
 # 🚀 发布 ROS Path 消息（循环发布）
 def publish_path(trajectory):
-    rospy.init_node("minimum_snap_path_publisher", anonymous=True)
-    pub = rospy.Publisher("/minimum_snap_path", Path, queue_size=10)
-    rospy.sleep(1.0)
-
     path_msg = Path()
     path_msg.header.frame_id = "world"
-
     for pos, _,quat in trajectory:
         pose = PoseStamped()
         pose.header.frame_id = "world"
@@ -72,17 +67,11 @@ def publish_path(trajectory):
         pose.pose.orientation.z = quat[2]
         pose.pose.orientation.w = quat[3]
         path_msg.poses.append(pose)
-
-    rate = rospy.Rate(1)  # 1 Hz 发布
-    while not rospy.is_shutdown():
-        path_msg.header.stamp = rospy.Time.now()
-        pub.publish(path_msg)
-        print("sent!")
-        rate.sleep()
+    return path_msg
 
 def generate_path():
     waypoints = [
-        [0,0,0],
+        [0,0,2.5],
         [-2, 8, 2.5],
         [9, 9, 2.5],
         [10, 0, 2.5],
@@ -90,7 +79,6 @@ def generate_path():
         [0, -10.0, 2.5],
         [-8, -7, 6.2],
         [-8, -7, 2.5],
-        [-8, -7, 6.2]
     ]
     trajectory = generate_trajectory(waypoints, num_points=150)
     return trajectory

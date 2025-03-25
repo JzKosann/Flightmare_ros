@@ -17,7 +17,6 @@
     
     <node name="acados_racing" pkg="acados_nmpc_controller" type="acados_racing" output="screen" launch-prefix="gdb -ex run --args" if="$(arg debug)" >
     </node>
-
     <node name="acados_racing" pkg="acados_nmpc_controller" type="acados_racing" output="screen" unless="$(arg debug)">
     </node>
 

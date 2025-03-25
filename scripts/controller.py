@@ -26,7 +26,7 @@ class NMPC_Controller:
                                      J_RP, d, Cm, Ct)
 
         self.Tf = 1.0                       # 预测时间长度
-        self.N = 30                         # 预测步数（节点数量）
+        self.N = 20                         # 预测步数（节点数量）
         self.nx = self.model.x.size()[0]    # 状态维度 四元数 13
         self.nu = self.model.u.size()[0]    # 控制输入维度
         self.ny = self.nx + self.nu         # 评估维度 12+4 四元数 13+4
@@ -52,13 +52,13 @@ class NMPC_Controller:
 
         # 权重设置 # // TODO 权重需要更改
         # Q = np.eye(self.nx) # 状态权重
-        Q = np.diag([   50.0,  50.0,  200.0, 
-                        1,      1,      1,
-                        100,      100,      100,    100,
-                        1,     1,   1])        
+        Q = np.diag([   300.0,  300.0,  400.0, 
+                        10,      10,     10,
+                        20,      20,      20,    20,
+                        0,      0,    0])        
         R = np.eye(self.nu) # 控制权重
         # R = np.diag([1e-5, 1e-5, 1e-5, 1e-5])
-        R = np.diag([1, 1, 1, 1])
+        R = np.diag([0.001, 0.001, 0.001, 0.001])
         self.ocp.cost.W = scipy.linalg.block_diag(Q, R)
 
         Vx = np.zeros((self.ny, self.nx))
@@ -72,8 +72,8 @@ class NMPC_Controller:
         Vu[self.nx+3, 3] = 1.0
         self.ocp.cost.Vu = Vu
 
-        self.ocp.cost.W_e = 100.0 * Q
-        # self.ocp.cost.W_e = Q
+        # self.ocp.cost.W_e = 50.0 * Q
+        self.ocp.cost.W_e = 2*Q
 
         Vx_e = np.zeros((self.ny_e, self.nx))
         Vx_e = np.diag([    1.0,    1.0,    1.0,
