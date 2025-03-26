@@ -58,23 +58,28 @@ if __name__ == '__main__':
                                 quad_state.qw, quad_state.qx, quad_state.qy, quad_state.qz,
                                 #   quad_state.phi, quad_state.theta, quad_state.psi,
                                 quad_state.p, quad_state.q, quad_state.r])
+            cur_quat = np.array([quad_state.qw, quad_state.qx, quad_state.qy, quad_state.qz])
             cur_pos = np.array([quad_state.x, quad_state.y, quad_state.z])
+
             distances = [np.linalg.norm(np.array(pos)-cur_pos) for pos, _, _ in trajectory]
             closest_idx = np.argmin(distances)
-
-            tar_pos, tar_vel, tar_quat = trajectory[min(closest_idx + 5, len(trajectory)-1)]
+            tar_pos, tar_vel, tar_quat = trajectory[min(closest_idx , len(trajectory)-1)]
             print(f"Tracking Point {index}: {tar_pos}")
             target_pos = np.array([tar_pos[0],tar_pos[1],tar_pos[2],
+                                # tar_vel[0],tar_vel[1],tar_vel[2],
                                 0,0,0,
-                                # 0,0,0,
-                                -tar_quat[3],-tar_quat[0],-tar_quat[1],-tar_quat[2],
+                                tar_quat[3],tar_quat[0],tar_quat[1],tar_quat[2],
                                 # 1,0,0,0,
                                 0,0,0])
+            # tar_quat_test = np.array([0, 0, 0, 1])
+            # # if np.dot(cur_quat, tar_quat_test) < 0:
+            # #     tar_quat_test = -tar_quat_test
+        
             # target_pos = np.array([1,-1,2.5,
             #                     # tar_vel[0],tar_vel[1],tar_vel[2],
             #                     0,0,0,
             #                     # tar_quat[3],tar_quat[0],tar_quat[1],tar_quat[2],
-            #                     1,0,0,0,
+            #                     tar_quat_test[0],tar_quat_test[1],tar_quat_test[2],tar_quat_test[3],
             #                     0,0,0])
             # --- quadrotor control --- #
             _dt, w, x_opt_acados = nmpc_controller.nmpc_state_control(current_state=cur_state, target_state=target_pos)

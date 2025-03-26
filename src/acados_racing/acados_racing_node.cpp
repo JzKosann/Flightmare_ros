@@ -95,8 +95,8 @@ void acados_ros::UnityCallback(const mav_msgs::QuadThrusts::ConstPtr &msg)
     // pose_msg.header.seq=
     acados_ros::Oritantion_pub.publish(pose_msg);
 
-    printf("pos: x:%f, y:%f, z:%f \r\nquat: w:%f, x:%f, y:%f, z:%f \r\n", quad_state.x[QS::POSX], quad_state.x[QS::POSY], quad_state.x[QS::POSZ],
-        quad_state.x[QS::ATTW], quad_state.x[QS::ATTX], quad_state.x[QS::ATTY], quad_state.x[QS::ATTZ]);
+    printf("pos: x:%f, y:%f, z:%f \r\n vel: x:%f, y:%f, z:%f \r\nquat: w:%f, x:%f, y:%f, z:%f \r\n w: p:%f, q:%f, r:%f\r\n", quad_state.x[QS::POSX], quad_state.x[QS::POSY], quad_state.x[QS::POSZ],quad_state.x[QS::VELX], quad_state.x[QS::VELY], quad_state.x[QS::VELZ],
+        quad_state.x[QS::ATTW], quad_state.x[QS::ATTX], quad_state.x[QS::ATTY], quad_state.x[QS::ATTZ],quad_state.x[QS::OMEX], quad_state.x[QS::OMEY], quad_state.x[QS::OMEZ]);
     
     printf("delay: %f ms \r\n", (Unity_time.toSec() - last_time.toSec()) * 1000);
     last_time = Unity_time;

@@ -44,9 +44,11 @@ def quadrotor_model(m, g, Ixx, Iyy, Izz, J_RP, d, Cm, Ct):
     controls = vertcat(w1, w2, w3, w4)
     f = Ct * (w1**2 + w2**2 + w3**2 + w4**2)
     Omega = w1 - w2 + w3 - w4
-    tau_x = d * Ct * (np.sqrt(2) / 2) * ( w1**2 - w2**2 - w3**2 + w4**2 )
-    tau_y = d * Ct * (np.sqrt(2) / 2) * ( - w1**2 - w2**2 + w3**2 + w4**2 )
-    tau_z = Cm * ( - w1**2 + w2**2 - w3**2 + w4**2)
+    tau_x = d * Ct * ( w1**2 - w2**2 - w3**2 + w4**2 )
+    tau_y = d * Ct * ( - w1**2 - w2**2 + w3**2 + w4**2 )
+    # tau_x = d * Ct * (np.sqrt(2) / 2) * ( w1**2 - w2**2 - w3**2 + w4**2 )
+    # tau_y = d * Ct * (np.sqrt(2) / 2) * ( - w1**2 - w2**2 + w3**2 + w4**2 )
+    tau_z = -Cm * ( - w1**2 + w2**2 - w3**2 + w4**2)
     # tau_z = d * Cm * ( - w1**2 + w2**2 - w3**2 + w4**2)
 
     # 状态变量 求导

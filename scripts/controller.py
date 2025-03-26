@@ -52,10 +52,10 @@ class NMPC_Controller:
 
         # 权重设置 # // TODO 权重需要更改
         # Q = np.eye(self.nx) # 状态权重
-        Q = np.diag([   300.0,  300.0,  400.0, 
+        Q = np.diag([   300.0,  300.0,  600.0, 
                         10,      10,     10,
-                        20,      20,      20,    20,
-                        0,      0,    0])        
+                        300,      300,      300,    300,
+                        1e-2,      1e-2,    1e-2])        
         R = np.eye(self.nu) # 控制权重
         # R = np.diag([1e-5, 1e-5, 1e-5, 1e-5])
         R = np.diag([0.001, 0.001, 0.001, 0.001])
@@ -73,7 +73,7 @@ class NMPC_Controller:
         self.ocp.cost.Vu = Vu
 
         # self.ocp.cost.W_e = 50.0 * Q
-        self.ocp.cost.W_e = 2*Q
+        self.ocp.cost.W_e = Q
 
         Vx_e = np.zeros((self.ny_e, self.nx))
         Vx_e = np.diag([    1.0,    1.0,    1.0,
@@ -162,6 +162,7 @@ class NMPC_Controller:
         f = Ct * (w_opt_acados[:, 0]**2 + w_opt_acados[:, 1]**2 + w_opt_acados[:, 2]**2 + w_opt_acados[:, 3]**2)
         # print("Thrust (f):", f)
         # print(w_opt_acados)
+        print(f"控制转速： {w_opt_acados[0]}")
         controls = w_opt_acados[0]**2 * self.Ct
         # return _dt, w_opt_acados[0], x_opt_acados  # 返回最近控制输入 4 Vector(速度)
         return _dt, controls, x_opt_acados  # 返回最近控制输入 4 Vector(速度)
@@ -183,7 +184,7 @@ if __name__ == '__main__':
     tar_pos = np.array([0,0,20,0,0,0,0,0,0,0,0,0,0])
     _dt, w,x_opt_acados = nmpc_controller.nmpc_state_control(cur_state, tar_pos)
 
-    print(w)
+    print(x_opt_acados)
         # 绘制状态轨迹
     time_steps = np.linspace(0, nmpc_controller.Tf, nmpc_controller.N + 1)
 
