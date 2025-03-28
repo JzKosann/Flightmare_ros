@@ -25,8 +25,8 @@ class NMPC_Controller:
         self.model = quadrotor_model(m, g, Ixx, Iyy, Izz,
                                      J_RP, d, Cm, Ct)
 
-        self.Tf = 1.0                       # 预测时间长度
-        self.N = 20                         # 预测步数（节点数量）
+        self.Tf = 0.5                       # 预测时间长度
+        self.N = 15                         # 预测步数（节点数量）
         self.nx = self.model.x.size()[0]    # 状态维度 四元数 13
         self.nu = self.model.u.size()[0]    # 控制输入维度
         self.ny = self.nx + self.nu         # 评估维度 12+4 四元数 13+4
@@ -52,12 +52,12 @@ class NMPC_Controller:
 
         # 权重设置 # // TODO 权重需要更改
         # Q = np.eye(self.nx) # 状态权重
-        Q = np.diag([   300.0,  300.0,  600.0, 
-                        10,      10,     10,
-                        300,      300,      300,    300,
-                        1e-2,      1e-2,    1e-2])        
+        Q = np.diag([   2000.0,  2000.0,  3000.0, 
+                        1e-5,      1e-5,     1e-5,
+                        1000,      1000,      1000,    1000,
+                        1e-5,      1e-5,    1e-5])        
         R = np.eye(self.nu) # 控制权重
-        # R = np.diag([1e-5, 1e-5, 1e-5, 1e-5])
+        # R = np.diag([5e-4, 5e-4, 5e-4, 5e-4])
         R = np.diag([0.001, 0.001, 0.001, 0.001])
         self.ocp.cost.W = scipy.linalg.block_diag(Q, R)
 
@@ -73,7 +73,7 @@ class NMPC_Controller:
         self.ocp.cost.Vu = Vu
 
         # self.ocp.cost.W_e = 50.0 * Q
-        self.ocp.cost.W_e = Q
+        self.ocp.cost.W_e = 1000* Q
 
         Vx_e = np.zeros((self.ny_e, self.nx))
         Vx_e = np.diag([    1.0,    1.0,    1.0,

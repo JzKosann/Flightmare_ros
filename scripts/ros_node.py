@@ -6,9 +6,11 @@ from mav_msgs.msg import QuadThrusts, QuadCurState
 from controller import *
 from path_gen import *
 
+
 quad_thrusts_pub = None
 quad_state_sub = None
 quad_path_pub = None
+quad_twist_pub = None
 nmpc_controller = NMPC_Controller()
 quad_thrusts_msg = QuadThrusts()
 quad_state = QuadCurState()
@@ -30,10 +32,12 @@ def quad_Callback(data):
     # print(w[1])
 
 def ros_init():
-    global quad_state_sub, quad_thrusts_pub, quad_path_pub
+    global quad_state_sub, quad_thrusts_pub, quad_path_pub, quad_twist_pub
     quad_thrusts_pub = rospy.Publisher('flightmare_control/thrusts', QuadThrusts, queue_size=1) # 发布控制信息
     quad_state_sub = rospy.Subscriber('flightmare_control/state_info', QuadCurState, quad_Callback, queue_size=1)
     quad_path_pub = rospy.Publisher('flightmare_control/desired_path', Path, queue_size= 10)
+
+    # quad_twist_pub = rospy.Publisher('flightmare_control/desired_twist', TwistStamped, queue_size=1)
 
 
 
@@ -44,10 +48,18 @@ if __name__ == '__main__':
     rate = rospy.Rate(100)
     trajectory = generate_path()
     quad_path_msg = publish_path(trajectory)
-    target_reach_threshold = 0.3
+
+
+    target_reach_threshold = 1.0
     # index_ahead = 10
     index = 0
+    last_tar_pos = np.array([0,0,0])
+
+
+
     last_time = rospy.get_rostime().to_sec()
+
+
     while not rospy.is_shutdown():
 
         if is_get_state:
@@ -58,42 +70,59 @@ if __name__ == '__main__':
                                 quad_state.qw, quad_state.qx, quad_state.qy, quad_state.qz,
                                 #   quad_state.phi, quad_state.theta, quad_state.psi,
                                 quad_state.p, quad_state.q, quad_state.r])
-            cur_quat = np.array([quad_state.qw, quad_state.qx, quad_state.qy, quad_state.qz])
+            cur_quat = np.array([quad_state.qx, quad_state.qy, quad_state.qz, quad_state.qw])
             cur_pos = np.array([quad_state.x, quad_state.y, quad_state.z])
 
-            distances = [np.linalg.norm(np.array(pos)-cur_pos) for pos, _, _ in trajectory]
-            closest_idx = np.argmin(distances)
-            tar_pos, tar_vel, tar_quat = trajectory[min(closest_idx , len(trajectory)-1)]
+            # distances = [np.linalg.norm(np.array(pos)-cur_pos) for pos, _, _ in trajectory]
+            # closest_idx = np.argmin(distances)
+            # tar_pos, tar_vel, tar_quat = trajectory[min(closest_idx + 5, len(trajectory)-1)]
+
+            # 目标点和当前点小于阈值 轨迹序列加1
+            if np.linalg.norm(cur_pos - last_tar_pos) < target_reach_threshold:
+                index += 1  
+            index = min(index,len(trajectory)-1)
+            tar_pos, tar_vel, tar_quat = trajectory[index]
+            last_tar_pos = np.array([tar_pos[0], tar_pos[1], tar_pos[2]]) # 存储为np矩阵
+
             print(f"Tracking Point {index}: {tar_pos}")
+            
+            if np.dot(cur_quat, tar_quat) < 0: # 解决四元数双覆盖问题
+                tar_quat=-tar_quat
+
             target_pos = np.array([tar_pos[0],tar_pos[1],tar_pos[2],
                                 # tar_vel[0],tar_vel[1],tar_vel[2],
                                 0,0,0,
                                 tar_quat[3],tar_quat[0],tar_quat[1],tar_quat[2],
                                 # 1,0,0,0,
-                                0,0,0])
-            # tar_quat_test = np.array([0, 0, 0, 1])
-            # # if np.dot(cur_quat, tar_quat_test) < 0:
-            # #     tar_quat_test = -tar_quat_test
-        
-            # target_pos = np.array([1,-1,2.5,
-            #                     # tar_vel[0],tar_vel[1],tar_vel[2],
+                                0,0,0])           
+            # desire_twist_msg = TwistStamped()
+            # desire_twist_msg.twist.linear.x = tar_vel[0]
+            # desire_twist_msg.twist.linear.y = tar_vel[1]
+            # desire_twist_msg.twist.linear.z = tar_vel[2]
+            # desire_twist_msg.header.stamp = rospy.Time.now()
+            # quad_twist_pub.publish(desire_twist_msg)
+
+            # tar_quat_test = np.array([1, 0, 0, 0])
+            # target_pos = np.array([0.5,-0.5,2.5,
+            #                     # tar_vel[0],[1],tar_vel[2],tar_vel[3]
             #                     0,0,0,
             #                     # tar_quat[3],tar_quat[0],tar_quat[1],tar_quat[2],
             #                     tar_quat_test[0],tar_quat_test[1],tar_quat_test[2],tar_quat_test[3],
             #                     0,0,0])
+
             # --- quadrotor control --- #
             _dt, w, x_opt_acados = nmpc_controller.nmpc_state_control(current_state=cur_state, target_state=target_pos)
             quad_thrusts_msg.thrusts_1 = w[0]
             quad_thrusts_msg.thrusts_2 = w[1]
             quad_thrusts_msg.thrusts_3 = w[2]
             quad_thrusts_msg.thrusts_4 = w[3]
+            quad_thrusts_pub.publish(quad_thrusts_msg)
 
             current_time = rospy.get_rostime().to_sec()
             print(f"Thrust:[{w[0]},{w[1]},{w[2]},{w[3]}]")
             print(f"delay {(current_time - last_time)*1000}ms")
             last_time = current_time
             is_get_state = False
-            quad_thrusts_pub.publish(quad_thrusts_msg)
         else:
             quad_thrusts_pub.publish(quad_thrusts_msg)
         quad_path_msg.header.stamp = rospy.Time.now()

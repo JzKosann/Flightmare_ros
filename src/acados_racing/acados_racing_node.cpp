@@ -3,6 +3,7 @@
 #include <image_transport/image_transport.h>
 #include <ros/ros.h>
 #include <geometry_msgs/Pose.h>
+#include <geometry_msgs/TwistStamped.h>
 #include <mav_msgs/QuadThrusts.h>
 #include <mav_msgs/QuadCurState.h>
 
@@ -95,6 +96,18 @@ void acados_ros::UnityCallback(const mav_msgs::QuadThrusts::ConstPtr &msg)
     // pose_msg.header.seq=
     acados_ros::Oritantion_pub.publish(pose_msg);
 
+    // geometry_msgs::TwistStamped twist_msg;
+    // twist_msg.twist.linear.x = quad_state_msg.vx;
+    // twist_msg.twist.linear.y = quad_state_msg.vy;
+    // twist_msg.twist.linear.z = quad_state_msg.vz;
+    // twist_msg.twist.angular.x = quad_state_msg.p;
+    // twist_msg.twist.angular.y = quad_state_msg.q;
+    // twist_msg.twist.angular.z = quad_state_msg.r;
+    // twist_msg.header.stamp = Unity_time;
+    // twist_msg.header.frame_id = "world";
+    // twist_msg.header.seq = seq_i;
+    // acados_ros::Twist_pub.publish(twist_msg);
+
     printf("pos: x:%f, y:%f, z:%f \r\n vel: x:%f, y:%f, z:%f \r\nquat: w:%f, x:%f, y:%f, z:%f \r\n w: p:%f, q:%f, r:%f\r\n", quad_state.x[QS::POSX], quad_state.x[QS::POSY], quad_state.x[QS::POSZ],quad_state.x[QS::VELX], quad_state.x[QS::VELY], quad_state.x[QS::VELZ],
         quad_state.x[QS::ATTW], quad_state.x[QS::ATTX], quad_state.x[QS::ATTY], quad_state.x[QS::ATTZ],quad_state.x[QS::OMEX], quad_state.x[QS::OMEY], quad_state.x[QS::OMEZ]);
     
@@ -129,7 +142,7 @@ int main(int argc, char *argv[])
     acados_ros::QuadThrusts_sub = nh.subscribe("flightmare_control/thrusts", 1, acados_ros::UnityCallback);
     acados_ros::QuadCurStates_pub = nh.advertise<mav_msgs::QuadCurState>("flightmare_control/state_info", 1);
     acados_ros::Oritantion_pub = nh.advertise<geometry_msgs::PoseStamped>("flightmare_control/Oritantion", 1);
-
+    acados_ros::Twist_pub=nh.advertise<geometry_msgs::TwistStamped>("flightmare_control/Twist", 1);
     image_transport::ImageTransport it(pnh);
     acados_ros::rgb_pub = it.advertise("/flightmare_control/rgb", 1);
     // 创建发布者

@@ -2,7 +2,7 @@
 import rospy
 import numpy as np
 from nav_msgs.msg import Path
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, TwistStamped
 from tf.transformations import quaternion_from_matrix
 from scipy.interpolate import CubicSpline
 
@@ -69,7 +69,7 @@ def publish_path(trajectory):
         path_msg.poses.append(pose)
     return path_msg
 
-def generate_path():
+def generate_path(num_points=150, desired_speed=2.0):
     waypoints = [
         [0,0,2.5],
         [-2, 8, 2.5],
@@ -80,7 +80,7 @@ def generate_path():
         [-8, -7, 6.2],
         [-8, -7, 2.5],
     ]
-    trajectory = generate_trajectory(waypoints, num_points=150)
+    trajectory = generate_trajectory(waypoints, num_points=num_points, desired_speed=desired_speed)
     return trajectory
 
 # 🏁 主函数：定义赛道门 + 执行轨迹生成与发布

@@ -15,7 +15,10 @@ namespace acados_ros{
     // 发布
     ros::Publisher QuadCurStates_pub;
     ros::Publisher Oritantion_pub;
+    ros::Publisher Twist_pub;
     image_transport::Publisher rgb_pub;
+    image_transport::Publisher depth_pub;
+    
     
     void quaternionToEuler(double q_w, double q_x, double q_y, double q_z, double &roll, double &pitch, double &yaw) {
         // 计算 Roll (X 轴旋转)
