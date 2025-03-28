@@ -115,18 +115,28 @@ void acados_ros::UnityCallback(const mav_msgs::QuadThrusts::ConstPtr &msg)
     last_time = Unity_time;
     unity_bridge_ptr->getRender(0);
     unity_bridge_ptr->handleOutput();
-    // cv::Mat img;
-    // rgb_camera->getRGBImage(img);
-    // sensor_msgs::ImagePtr rgb_msg =
-    //     cv_bridge::CvImage(std_msgs::Header(), "bgr8", img).toImageMsg();
-    // ros::Time timestamp = ros::Time::now();
-    // rgb_msg->header.stamp = timestamp;
-    // acados_ros::rgb_pub.publish(rgb_msg);
-    // ROS_INFO("img sent!");
+   
+
 }
 
 void acados_ros::Timer_callback(const ros::TimerEvent &e)
 {
+    // ros::Time Unity_time = ros::Time::now();
+    // cv::Mat img;
+    // rgb_camera->getRGBImage(img);
+    // sensor_msgs::ImagePtr rgb_msg =
+    //     cv_bridge::CvImage(std_msgs::Header(), "bgr8", img).toImageMsg();
+    // // ros::Time timestamp = ros::Time::now();
+    // rgb_msg->header.stamp = Unity_time;
+    // acados_ros::rgb_pub.publish(rgb_msg);
+
+    // rgb_camera->getDepthMap(img);
+    // sensor_msgs::ImagePtr depth_msg =
+    //   cv_bridge::CvImage(std_msgs::Header(), "32FC1", img).toImageMsg();
+    // depth_msg->header.stamp = Unity_time;
+    // acados_ros::depth_pub.publish(depth_msg);
+
+    // ROS_INFO("img sent!");
 }
 
 // static void InitializeEnv() {}
@@ -145,6 +155,7 @@ int main(int argc, char *argv[])
     acados_ros::Twist_pub=nh.advertise<geometry_msgs::TwistStamped>("flightmare_control/Twist", 1);
     image_transport::ImageTransport it(pnh);
     acados_ros::rgb_pub = it.advertise("/flightmare_control/rgb", 1);
+    acados_ros::depth_pub= it.advertise("/flightmare_control/depth", 1);
     // 创建发布者
     // unity 场景设置--------------------------------------------------------------------------//
     // Flightmare(Unity3D)
@@ -207,16 +218,16 @@ int main(int argc, char *argv[])
     // unity 场景设置--------------------------------------------------------------------------//
 
     // Initialize camera
-    Vector<3> B_r_BC(0.0, 0.0, 0.3);
-    Matrix<3, 3> R_BC = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
-    std::cout << R_BC << std::endl;
-    rgb_camera->setFOV(90);
-    rgb_camera->setWidth(640);
-    rgb_camera->setHeight(360);
-    rgb_camera->setRelPose(B_r_BC, R_BC);
-    rgb_camera->setPostProcesscing(std::vector<bool>{
-        false, false, false}); // depth, segmentation, optical flow
-    quad_ptr->addRGBCamera(rgb_camera);
+    // Vector<3> B_r_BC(0.0, 0.0, 0.3);
+    // Matrix<3, 3> R_BC = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
+    // std::cout << R_BC << std::endl;
+    // rgb_camera->setFOV(90);
+    // rgb_camera->setWidth(640);
+    // rgb_camera->setHeight(360);
+    // rgb_camera->setRelPose(B_r_BC, R_BC);
+    // rgb_camera->setPostProcesscing(std::vector<bool>{
+    //     false, false, false}); // depth, segmentation, optical flow
+    // quad_ptr->addRGBCamera(rgb_camera);
 
     // Start racing
     ros::Time t0 = ros::Time::now();
@@ -239,7 +250,7 @@ int main(int argc, char *argv[])
     // connect unity
     unity_ready = unity_bridge_ptr->connectUnity(scene_id);
 
-    ros::Timer timer = nh.createTimer(ros::Duration(0.005), acados_ros::Timer_callback);
+    // ros::Timer timer = nh.createTimer(ros::Duration(0.00), acados_ros::Timer_callback);
 
     FrameID frame_id = 0;
 

@@ -402,29 +402,64 @@ void quadrotor_acados_setup_nlp_in(quadrotor_solver_capsule* capsule, const int 
     else
     {
         // set time_steps
-    double time_step = 0.03333333333333333;
+    double time_step = 0.02;
         for (int i = 0; i < N; i++)
         {
             ocp_nlp_in_set(nlp_config, nlp_dims, nlp_in, i, "Ts", &time_step);
         }
         // set cost scaling
         double* cost_scaling = malloc((N+1)*sizeof(double));
-        cost_scaling[0] = 0.03333333333333333;
-        cost_scaling[1] = 0.03333333333333333;
-        cost_scaling[2] = 0.03333333333333333;
-        cost_scaling[3] = 0.03333333333333333;
-        cost_scaling[4] = 0.03333333333333333;
-        cost_scaling[5] = 0.03333333333333333;
-        cost_scaling[6] = 0.03333333333333333;
-        cost_scaling[7] = 0.03333333333333333;
-        cost_scaling[8] = 0.03333333333333333;
-        cost_scaling[9] = 0.03333333333333333;
-        cost_scaling[10] = 0.03333333333333333;
-        cost_scaling[11] = 0.03333333333333333;
-        cost_scaling[12] = 0.03333333333333333;
-        cost_scaling[13] = 0.03333333333333333;
-        cost_scaling[14] = 0.03333333333333333;
-        cost_scaling[15] = 1;
+        cost_scaling[0] = 0.02;
+        cost_scaling[1] = 0.02;
+        cost_scaling[2] = 0.02;
+        cost_scaling[3] = 0.02;
+        cost_scaling[4] = 0.02;
+        cost_scaling[5] = 0.02;
+        cost_scaling[6] = 0.02;
+        cost_scaling[7] = 0.02;
+        cost_scaling[8] = 0.02;
+        cost_scaling[9] = 0.02;
+        cost_scaling[10] = 0.02;
+        cost_scaling[11] = 0.02;
+        cost_scaling[12] = 0.02;
+        cost_scaling[13] = 0.02;
+        cost_scaling[14] = 0.02;
+        cost_scaling[15] = 0.02;
+        cost_scaling[16] = 0.02;
+        cost_scaling[17] = 0.02;
+        cost_scaling[18] = 0.02;
+        cost_scaling[19] = 0.02;
+        cost_scaling[20] = 0.02;
+        cost_scaling[21] = 0.02;
+        cost_scaling[22] = 0.02;
+        cost_scaling[23] = 0.02;
+        cost_scaling[24] = 0.02;
+        cost_scaling[25] = 0.02;
+        cost_scaling[26] = 0.02;
+        cost_scaling[27] = 0.02;
+        cost_scaling[28] = 0.02;
+        cost_scaling[29] = 0.02;
+        cost_scaling[30] = 0.02;
+        cost_scaling[31] = 0.02;
+        cost_scaling[32] = 0.02;
+        cost_scaling[33] = 0.02;
+        cost_scaling[34] = 0.02;
+        cost_scaling[35] = 0.02;
+        cost_scaling[36] = 0.02;
+        cost_scaling[37] = 0.02;
+        cost_scaling[38] = 0.02;
+        cost_scaling[39] = 0.02;
+        cost_scaling[40] = 0.02;
+        cost_scaling[41] = 0.02;
+        cost_scaling[42] = 0.02;
+        cost_scaling[43] = 0.02;
+        cost_scaling[44] = 0.02;
+        cost_scaling[45] = 0.02;
+        cost_scaling[46] = 0.02;
+        cost_scaling[47] = 0.02;
+        cost_scaling[48] = 0.02;
+        cost_scaling[49] = 0.02;
+        cost_scaling[50] = 1;
         for (int i = 0; i <= N; i++)
         {
             ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, i, "scaling", &cost_scaling[i]);
@@ -457,20 +492,20 @@ void quadrotor_acados_setup_nlp_in(quadrotor_solver_capsule* capsule, const int 
     W_0[0+(NY0) * 0] = 2000;
     W_0[1+(NY0) * 1] = 2000;
     W_0[2+(NY0) * 2] = 3000;
-    W_0[3+(NY0) * 3] = 0.00001;
-    W_0[4+(NY0) * 4] = 0.00001;
-    W_0[5+(NY0) * 5] = 0.00001;
-    W_0[6+(NY0) * 6] = 1000;
-    W_0[7+(NY0) * 7] = 1000;
-    W_0[8+(NY0) * 8] = 1000;
-    W_0[9+(NY0) * 9] = 1000;
-    W_0[10+(NY0) * 10] = 0.00001;
-    W_0[11+(NY0) * 11] = 0.00001;
-    W_0[12+(NY0) * 12] = 0.00001;
-    W_0[13+(NY0) * 13] = 0.001;
-    W_0[14+(NY0) * 14] = 0.001;
-    W_0[15+(NY0) * 15] = 0.001;
-    W_0[16+(NY0) * 16] = 0.001;
+    W_0[3+(NY0) * 3] = 50;
+    W_0[4+(NY0) * 4] = 50;
+    W_0[5+(NY0) * 5] = 50;
+    W_0[6+(NY0) * 6] = 2000;
+    W_0[7+(NY0) * 7] = 4000;
+    W_0[8+(NY0) * 8] = 4000;
+    W_0[9+(NY0) * 9] = 2000;
+    W_0[10+(NY0) * 10] = 10;
+    W_0[11+(NY0) * 11] = 10;
+    W_0[12+(NY0) * 12] = 10;
+    W_0[13+(NY0) * 13] = 0.01;
+    W_0[14+(NY0) * 14] = 0.01;
+    W_0[15+(NY0) * 15] = 0.01;
+    W_0[16+(NY0) * 16] = 0.01;
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 0, "W", W_0);
     free(W_0);
     double* Vx_0 = calloc(NY0*NX, sizeof(double));
@@ -516,20 +551,20 @@ void quadrotor_acados_setup_nlp_in(quadrotor_solver_capsule* capsule, const int 
     W[0+(NY) * 0] = 2000;
     W[1+(NY) * 1] = 2000;
     W[2+(NY) * 2] = 3000;
-    W[3+(NY) * 3] = 0.00001;
-    W[4+(NY) * 4] = 0.00001;
-    W[5+(NY) * 5] = 0.00001;
-    W[6+(NY) * 6] = 1000;
-    W[7+(NY) * 7] = 1000;
-    W[8+(NY) * 8] = 1000;
-    W[9+(NY) * 9] = 1000;
-    W[10+(NY) * 10] = 0.00001;
-    W[11+(NY) * 11] = 0.00001;
-    W[12+(NY) * 12] = 0.00001;
-    W[13+(NY) * 13] = 0.001;
-    W[14+(NY) * 14] = 0.001;
-    W[15+(NY) * 15] = 0.001;
-    W[16+(NY) * 16] = 0.001;
+    W[3+(NY) * 3] = 50;
+    W[4+(NY) * 4] = 50;
+    W[5+(NY) * 5] = 50;
+    W[6+(NY) * 6] = 2000;
+    W[7+(NY) * 7] = 4000;
+    W[8+(NY) * 8] = 4000;
+    W[9+(NY) * 9] = 2000;
+    W[10+(NY) * 10] = 10;
+    W[11+(NY) * 11] = 10;
+    W[12+(NY) * 12] = 10;
+    W[13+(NY) * 13] = 0.01;
+    W[14+(NY) * 14] = 0.01;
+    W[15+(NY) * 15] = 0.01;
+    W[16+(NY) * 16] = 0.01;
 
     for (int i = 1; i < N; i++)
     {
@@ -578,19 +613,19 @@ void quadrotor_acados_setup_nlp_in(quadrotor_solver_capsule* capsule, const int 
 
     double* W_e = calloc(NYN*NYN, sizeof(double));
     // change only the non-zero elements:
-    W_e[0+(NYN) * 0] = 2000000;
-    W_e[1+(NYN) * 1] = 2000000;
-    W_e[2+(NYN) * 2] = 3000000;
-    W_e[3+(NYN) * 3] = 0.01;
-    W_e[4+(NYN) * 4] = 0.01;
-    W_e[5+(NYN) * 5] = 0.01;
-    W_e[6+(NYN) * 6] = 1000000;
-    W_e[7+(NYN) * 7] = 1000000;
-    W_e[8+(NYN) * 8] = 1000000;
-    W_e[9+(NYN) * 9] = 1000000;
-    W_e[10+(NYN) * 10] = 0.01;
-    W_e[11+(NYN) * 11] = 0.01;
-    W_e[12+(NYN) * 12] = 0.01;
+    W_e[0+(NYN) * 0] = 2000;
+    W_e[1+(NYN) * 1] = 2000;
+    W_e[2+(NYN) * 2] = 3000;
+    W_e[3+(NYN) * 3] = 50;
+    W_e[4+(NYN) * 4] = 50;
+    W_e[5+(NYN) * 5] = 50;
+    W_e[6+(NYN) * 6] = 2000;
+    W_e[7+(NYN) * 7] = 4000;
+    W_e[8+(NYN) * 8] = 4000;
+    W_e[9+(NYN) * 9] = 2000;
+    W_e[10+(NYN) * 10] = 10;
+    W_e[11+(NYN) * 11] = 10;
+    W_e[12+(NYN) * 12] = 10;
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "W", W_e);
     free(W_e);
     double* Vx_e = calloc(NYN*NX, sizeof(double));
@@ -798,7 +833,7 @@ static void quadrotor_acados_create_set_opts(quadrotor_solver_capsule* capsule)
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "levenberg_marquardt", &levenberg_marquardt);
 
     /* options QP solver */
-    int qp_solver_cond_N;const int qp_solver_cond_N_ori = 15;
+    int qp_solver_cond_N;const int qp_solver_cond_N_ori = 50;
     qp_solver_cond_N = N < qp_solver_cond_N_ori ? N : qp_solver_cond_N_ori; // use the minimum value here
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "qp_cond_N", &qp_solver_cond_N);
 
