@@ -73,7 +73,7 @@ int quadrotor_acados_sim_create(quadrotor_sim_solver_capsule * capsule)
     const int np = QUADROTOR_NP;
     bool tmp_bool;
 
-    double Tsim = 0.015;
+    double Tsim = 0.03333333333333333;
 
     external_function_opts ext_fun_opts;
     external_function_opts_set_to_default(&ext_fun_opts);
@@ -172,8 +172,8 @@ int quadrotor_acados_sim_create(quadrotor_sim_solver_capsule * capsule)
 
     /* initialize input */
     // x
-    double x0[12];
-    for (int ii = 0; ii < 12; ii++)
+    double x0[13];
+    for (int ii = 0; ii < 13; ii++)
         x0[ii] = 0.0;
 
     sim_in_set(quadrotor_sim_config, quadrotor_sim_dims,
@@ -189,11 +189,11 @@ int quadrotor_acados_sim_create(quadrotor_sim_solver_capsule * capsule)
                quadrotor_sim_in, "u", u0);
 
     // S_forw
-    double S_forw[192];
-    for (int ii = 0; ii < 192; ii++)
+    double S_forw[221];
+    for (int ii = 0; ii < 221; ii++)
         S_forw[ii] = 0.0;
-    for (int ii = 0; ii < 12; ii++)
-        S_forw[ii + ii * 12 ] = 1.0;
+    for (int ii = 0; ii < 13; ii++)
+        S_forw[ii + ii * 13 ] = 1.0;
 
 
     sim_in_set(quadrotor_sim_config, quadrotor_sim_dims,
