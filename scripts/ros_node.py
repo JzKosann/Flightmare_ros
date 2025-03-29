@@ -15,7 +15,9 @@ nmpc_controller = NMPC_Controller()
 quad_thrusts_msg = QuadThrusts()
 quad_state = QuadCurState()
 
-is_get_state = False    # 是否获取状态
+is_get_state = False    # 是否获取实时状态
+
+flight_mode = None      # 无人机飞行状态 『‘takeoff', 'trajectory'』
 
 def normalize_quaternion(qw, qx, qy, qz):
     norm = np.sqrt(qw**2 + qx**2 + qy**2 + qz**2)
@@ -55,12 +57,16 @@ if __name__ == '__main__':
     index = 0
     last_tar_pos = np.array([0,0,0])
 
-
-
     last_time = rospy.get_rostime().to_sec()
 
+    flight_mode = 'takeoff'         # 设定起飞模式
+    hover_counts = 0                # 悬停计时
+    hover_rate = rospy.Rate(1)     # hover_counts = 10 为悬停10s
+    hover_reach_threshold = 0.5
 
     while not rospy.is_shutdown():
+
+
 
         if is_get_state:
             # --- path generate --- #
@@ -73,42 +79,48 @@ if __name__ == '__main__':
             cur_quat = np.array([quad_state.qx, quad_state.qy, quad_state.qz, quad_state.qw])
             cur_pos = np.array([quad_state.x, quad_state.y, quad_state.z])
 
-            # distances = [np.linalg.norm(np.array(pos)-cur_pos) for pos, _, _ in trajectory]
-            # closest_idx = np.argmin(distances)
-            # tar_pos, tar_vel, tar_quat = trajectory[min(closest_idx + 5, len(trajectory)-1)]
+            if flight_mode == 'takeoff': # 起飞模式
+                hover_pos = np.array([0, 0, 2.5])
+                hover_quat = np.array([1,0,0,0])
+                
+                target_pos = np.array([hover_pos[0], hover_pos[1], hover_pos[2],
+                                    # tar_vel[0],[1],tar_vel[2],tar_vel[3]
+                                    0,0,0,
+                                    # tar_quat[3],tar_quat[0],tar_quat[1],tar_quat[2],
+                                    hover_quat[0],hover_quat[1],hover_quat[2],hover_quat[3],
+                                    0,0,0])
+                if np.linalg.norm(cur_pos - hover_pos) < hover_reach_threshold:
+                    hover_counts += 1
 
-            # 目标点和当前点小于阈值 轨迹序列加1
-            if np.linalg.norm(cur_pos - last_tar_pos) < target_reach_threshold:
-                index += 1  
-            index = min(index,len(trajectory)-1)
-            tar_pos, tar_vel, tar_quat = trajectory[index]
-            last_tar_pos = np.array([tar_pos[0], tar_pos[1], tar_pos[2]]) # 存储为np矩阵
+                if hover_counts >= 1000:
+                    flight_mode = 'trajectory'
+                    hover_counts = 0
+                
+            elif flight_mode == 'trajectory': # 追踪轨迹
+                # distances = [np.linalg.norm(np.array(pos)-cur_pos) for pos, _, _ in trajectory]
+                # closest_idx = np.argmin(distances)
+                # tar_pos, tar_vel, tar_quat = trajectory[min(closest_idx + 5, len(trajectory)-1)]
 
-            print(f"Tracking Point {index}: {tar_pos}")
-            
-            if np.dot(cur_quat, tar_quat) < 0: # 解决四元数双覆盖问题
-                tar_quat=-tar_quat
+                # 目标点和当前点小于阈值 轨迹序列加1
+                if np.linalg.norm(cur_pos - last_tar_pos) < target_reach_threshold:
+                    index += 1  
+                index = min(index,len(trajectory)-1)
+                tar_pos, tar_vel, tar_quat = trajectory[index]
+                last_tar_pos = np.array([tar_pos[0], tar_pos[1], tar_pos[2]]) # 存储为np矩阵
 
-            target_pos = np.array([tar_pos[0],tar_pos[1],tar_pos[2],
-                                # tar_vel[0],tar_vel[1],tar_vel[2],
-                                0,0,0,
-                                tar_quat[3],tar_quat[0],tar_quat[1],tar_quat[2],
-                                # 1,0,0,0,
-                                0,0,0])           
-            # desire_twist_msg = TwistStamped()
-            # desire_twist_msg.twist.linear.x = tar_vel[0]
-            # desire_twist_msg.twist.linear.y = tar_vel[1]
-            # desire_twist_msg.twist.linear.z = tar_vel[2]
-            # desire_twist_msg.header.stamp = rospy.Time.now()
-            # quad_twist_pub.publish(desire_twist_msg)
+                print(f"Tracking Point {index}: {tar_pos}")
+                
+                if np.dot(cur_quat, tar_quat) < 0: # 解决四元数双覆盖问题
+                    tar_quat=-tar_quat
 
-            # tar_quat_test = np.array([1, 0, 0, 0])
-            # target_pos = np.array([0.5,-0.5,2.5,
-            #                     # tar_vel[0],[1],tar_vel[2],tar_vel[3]
-            #                     0,0,0,
-            #                     # tar_quat[3],tar_quat[0],tar_quat[1],tar_quat[2],
-            #                     tar_quat_test[0],tar_quat_test[1],tar_quat_test[2],tar_quat_test[3],
-            #                     0,0,0])
+                target_pos = np.array([tar_pos[0],tar_pos[1],tar_pos[2],
+                                    # tar_vel[0],tar_vel[1],tar_vel[2],
+                                    0,0,0,
+                                    tar_quat[3],tar_quat[0],tar_quat[1],tar_quat[2],
+                                    # 1,0,0,0,
+                                    0,0,0])
+            else:
+                pass
 
             # --- quadrotor control --- #
             _dt, w, x_opt_acados = nmpc_controller.nmpc_state_control(current_state=cur_state, target_state=target_pos)
@@ -121,6 +133,7 @@ if __name__ == '__main__':
             current_time = rospy.get_rostime().to_sec()
             print(f"Thrust:[{w[0]},{w[1]},{w[2]},{w[3]}]")
             print(f"delay {(current_time - last_time)*1000}ms")
+            print(f"flight_mode: {flight_mode}, {hover_counts}")
             last_time = current_time
             is_get_state = False
         else:
