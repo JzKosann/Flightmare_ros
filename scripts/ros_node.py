@@ -5,7 +5,9 @@ import rospy
 from mav_msgs.msg import QuadThrusts, QuadCurState
 from controller import *
 from path_gen import *
-
+from std_msgs.msg import Float64
+import os
+import csv
 
 quad_thrusts_pub = None
 quad_state_sub = None
@@ -14,10 +16,16 @@ quad_twist_pub = None
 nmpc_controller = NMPC_Controller()
 quad_thrusts_msg = QuadThrusts()
 quad_state = QuadCurState()
-
+quad_traj_pub = None
+current_path = Path()
+quad_delay_pub = None
+quad_pos_error_pub = None
 is_get_state = False    # 是否获取实时状态
 
 flight_mode = None      # 无人机飞行状态 『‘takeoff', 'trajectory'』
+# 设置保存文件路径
+vel_save_path = os.path.expanduser("/home/jz/Documents/ads_fpv_ws/src/acados_nmpc_controller/source/vel.csv")  # 可以修改为你想保存的路径
+trajectory_csv_written = False  # 控制只写入一次表头
 
 def normalize_quaternion(qw, qx, qy, qz):
     norm = np.sqrt(qw**2 + qx**2 + qy**2 + qz**2)
@@ -34,11 +42,14 @@ def quad_Callback(data):
     # print(w[1])
 
 def ros_init():
-    global quad_state_sub, quad_thrusts_pub, quad_path_pub, quad_twist_pub
+    global quad_state_sub, quad_thrusts_pub, quad_path_pub, quad_twist_pub, quad_traj_pub, quad_delay_pub,quad_pos_error_pub 
     quad_thrusts_pub = rospy.Publisher('flightmare_control/thrusts', QuadThrusts, queue_size=1) # 发布控制信息
     quad_state_sub = rospy.Subscriber('flightmare_control/state_info', QuadCurState, quad_Callback, queue_size=1)
     quad_path_pub = rospy.Publisher('flightmare_control/desired_path', Path, queue_size= 10)
 
+    quad_traj_pub = rospy.Publisher('flightmare_control/current_trajectory', Path, queue_size=10)
+    quad_delay_pub = rospy.Publisher('flightmare_control/control_delay_ms', Float64, queue_size=10)
+    quad_pos_error_pub = rospy.Publisher('flightmare_control/control_pos_error', Float64, queue_size=10)
     # quad_twist_pub = rospy.Publisher('flightmare_control/desired_twist', TwistStamped, queue_size=1)
 
 
@@ -52,7 +63,7 @@ if __name__ == '__main__':
     quad_path_msg = publish_path(trajectory)
 
 
-    target_reach_threshold = 1.0
+    target_reach_threshold = 1.5
     # index_ahead = 10
     index = 0
     last_tar_pos = np.array([0,0,0])
@@ -64,9 +75,15 @@ if __name__ == '__main__':
     hover_rate = rospy.Rate(1)     # hover_counts = 10 为悬停10s
     hover_reach_threshold = 0.5
 
+    if not os.path.exists(vel_save_path):
+        with open(vel_save_path, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["time", "vel_x", "vel_y", "vel_z"])
+
+
     while not rospy.is_shutdown():
 
-
+        pos_error = 0
 
         if is_get_state:
             # --- path generate --- #
@@ -81,7 +98,7 @@ if __name__ == '__main__':
 
             if flight_mode == 'takeoff': # 起飞模式
                 hover_pos = np.array([0, 0, 2.5])
-                hover_quat = np.array([1,0,0,0])
+                hover_quat = np.array([0.50000,0,0,0.86603])
                 
                 target_pos = np.array([hover_pos[0], hover_pos[1], hover_pos[2],
                                     # tar_vel[0],[1],tar_vel[2],tar_vel[3]
@@ -92,7 +109,7 @@ if __name__ == '__main__':
                 if np.linalg.norm(cur_pos - hover_pos) < hover_reach_threshold:
                     hover_counts += 1
 
-                if hover_counts >= 1000:
+                if hover_counts >= 500:
                     flight_mode = 'trajectory'
                     hover_counts = 0
                 
@@ -102,7 +119,11 @@ if __name__ == '__main__':
                 # tar_pos, tar_vel, tar_quat = trajectory[min(closest_idx + 5, len(trajectory)-1)]
 
                 # 目标点和当前点小于阈值 轨迹序列加1
-                if np.linalg.norm(cur_pos - last_tar_pos) < target_reach_threshold:
+                pos_error = np.linalg.norm(cur_pos - last_tar_pos)
+                pos_error_msg = Float64()
+                pos_error_msg.data = pos_error
+                quad_pos_error_pub.publish(pos_error_msg)
+                if pos_error < target_reach_threshold:
                     index += 1  
                 index = min(index,len(trajectory)-1)
                 tar_pos, tar_vel, tar_quat = trajectory[index]
@@ -119,6 +140,31 @@ if __name__ == '__main__':
                                     tar_quat[3],tar_quat[0],tar_quat[1],tar_quat[2],
                                     # 1,0,0,0,
                                     0,0,0])
+                 # --- 发布当前轨迹 --- #
+                # current_pose = PoseStamped()
+                # current_pose.header.stamp = rospy.Time.now()
+                # current_pose.header.frame_id = "world"
+                # current_pose.pose.position.x = quad_state.x
+                # current_pose.pose.position.y = quad_state.y
+                # current_pose.pose.position.z = quad_state.z
+                # current_pose.pose.orientation.x = quad_state.qx
+                # current_pose.pose.orientation.y = quad_state.qy
+                # current_pose.pose.orientation.z = quad_state.qz
+                # current_pose.pose.orientation.w = quad_state.qw
+
+                # current_path.header.stamp = rospy.Time.now()
+                # current_path.header.frame_id = "world"
+                # current_path.poses.append(current_pose)
+                # quad_traj_pub.publish(current_path)
+                # === 记录轨迹点到内存 ===
+                with open(vel_save_path, mode='a', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow([
+                        rospy.Time.now().to_sec(),
+                        quad_state.vx,
+                        quad_state.vy,
+                        quad_state.vz
+                    ])
             else:
                 pass
 
@@ -131,9 +177,22 @@ if __name__ == '__main__':
             quad_thrusts_pub.publish(quad_thrusts_msg)
 
             current_time = rospy.get_rostime().to_sec()
+            # with open(control_save_path, mode='a', newline='') as file:
+            #         writer = csv.writer(file)
+            #         writer.writerow([
+            #             rospy.Time.now().to_sec(),
+            #             quad_thrusts_msg.thrusts_1,
+            #             quad_thrusts_msg.thrusts_2,
+            #             quad_thrusts_msg.thrusts_3,
+            #             quad_thrusts_msg.thrusts_4,
+            #             pos_error 
+            #         ])
             print(f"Thrust:[{w[0]},{w[1]},{w[2]},{w[3]}]")
             print(f"delay {(current_time - last_time)*1000}ms")
             print(f"flight_mode: {flight_mode}, {hover_counts}")
+            delay_msg=Float64()
+            delay_msg.data = (current_time - last_time)*1000
+            quad_delay_pub.publish(delay_msg)
             last_time = current_time
             is_get_state = False
         else:

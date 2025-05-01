@@ -35,100 +35,34 @@ using namespace flightlib;
 std::shared_ptr<UnityBridge> unity_bridge_ptr = UnityBridge::getInstance();
 QuadState quad_state;
 Command quad_command;
+float thrusts_1, thrusts_2, thrusts_3, thrusts_4;
 std::shared_ptr<Quadrotor> quad_ptr = std::make_shared<Quadrotor>();
 std::shared_ptr<RGBCamera> rgb_camera = std::make_shared<RGBCamera>();
 
 void acados_ros::UnityCallback(const mav_msgs::QuadThrusts::ConstPtr &msg)
 {
-    static uint32_t seq_i;
+    // 更新控制力矩
+    thrusts_1 = msg->thrusts_1;
+    thrusts_2 = msg->thrusts_2;
+    thrusts_3 = msg->thrusts_3;
+    thrusts_4 = msg->thrusts_4;
+    // 计算延迟
     static ros::Time last_time;
-    seq_i++;
-    Scalar t = 0.0;
-    Vector<4> thrusts{msg->thrusts_1, msg->thrusts_2, msg->thrusts_3, msg->thrusts_4};
-    // Vector<4> thrusts{2.490,2.49,2.49,2.49};
-    Command cmd(t, thrusts);
-    Scalar ctl_dt = 0.01;
-    // 检查命令是否有效
-    if (cmd.valid())
-    {
-        std::cout << "Command is valid." << std::endl;
-        quad_ptr->run(cmd, ctl_dt);
-    }
-
-    // 检查控制模式
-    if (cmd.isSingleRotorThrusts())
-    {
-        std::cout << "Using single rotor thrusts mode." << std::endl;
-        std::cout << "Thrusts: " << cmd.thrusts.transpose() << std::endl;
-    }
-    std::cout<<quad_ptr->getDynamics()<<std::endl; // 打印动态方程参数
-    // 发布无人机状态信息
-    quad_ptr->getState(&quad_state);
-    mav_msgs::QuadCurState quad_state_msg;
-    quad_state_msg.x = quad_state.x[QS::POSX];
-    quad_state_msg.y = quad_state.x[QS::POSY];
-    quad_state_msg.z = quad_state.x[QS::POSZ];
-    quad_state_msg.vx = quad_state.x[QS::VELX];
-    quad_state_msg.vy = quad_state.x[QS::VELY];
-    quad_state_msg.vz = quad_state.x[QS::VELZ];
-    quad_state_msg.qw = quad_state.x[QS::ATTW];
-    quad_state_msg.qx = quad_state.x[QS::ATTX];
-    quad_state_msg.qy = quad_state.x[QS::ATTY];
-    quad_state_msg.qz = quad_state.x[QS::ATTZ];
-    quad_state_msg.p = quad_state.x[QS::OMEX];
-    quad_state_msg.q = quad_state.x[QS::OMEY];
-    quad_state_msg.r = quad_state.x[QS::OMEZ];
     ros::Time Unity_time = ros::Time::now();
-    quad_state_msg.time = Unity_time.toSec();
-    acados_ros::QuadCurStates_pub.publish(quad_state_msg);
-
-    geometry_msgs::PoseStamped pose_msg;
-    pose_msg.pose.orientation.w = quad_state_msg.qw;
-    pose_msg.pose.orientation.x = quad_state_msg.qx;
-    pose_msg.pose.orientation.y = quad_state_msg.qy;
-    pose_msg.pose.orientation.z = quad_state_msg.qz;
-    pose_msg.pose.position.x = quad_state_msg.x;
-    pose_msg.pose.position.y = quad_state_msg.y;
-    pose_msg.pose.position.z = quad_state_msg.z;
-    pose_msg.header.stamp = Unity_time;
-    pose_msg.header.frame_id = "world";
-    pose_msg.header.seq = seq_i;
-    // pose_msg.header.seq=
-    acados_ros::Oritantion_pub.publish(pose_msg);
-
-    // geometry_msgs::TwistStamped twist_msg;
-    // twist_msg.twist.linear.x = quad_state_msg.vx;
-    // twist_msg.twist.linear.y = quad_state_msg.vy;
-    // twist_msg.twist.linear.z = quad_state_msg.vz;
-    // twist_msg.twist.angular.x = quad_state_msg.p;
-    // twist_msg.twist.angular.y = quad_state_msg.q;
-    // twist_msg.twist.angular.z = quad_state_msg.r;
-    // twist_msg.header.stamp = Unity_time;
-    // twist_msg.header.frame_id = "world";
-    // twist_msg.header.seq = seq_i;
-    // acados_ros::Twist_pub.publish(twist_msg);
-
-    printf("pos: x:%f, y:%f, z:%f \r\n vel: x:%f, y:%f, z:%f \r\nquat: w:%f, x:%f, y:%f, z:%f \r\n w: p:%f, q:%f, r:%f\r\n", quad_state.x[QS::POSX], quad_state.x[QS::POSY], quad_state.x[QS::POSZ],quad_state.x[QS::VELX], quad_state.x[QS::VELY], quad_state.x[QS::VELZ],
-        quad_state.x[QS::ATTW], quad_state.x[QS::ATTX], quad_state.x[QS::ATTY], quad_state.x[QS::ATTZ],quad_state.x[QS::OMEX], quad_state.x[QS::OMEY], quad_state.x[QS::OMEZ]);
-    
-    printf("delay: %f ms \r\n", (Unity_time.toSec() - last_time.toSec()) * 1000);
+    printf("control delay: %f ms \r\n", (Unity_time.toSec() - last_time.toSec()) * 1000);
     last_time = Unity_time;
-    unity_bridge_ptr->getRender(0);
-    unity_bridge_ptr->handleOutput();
-   
-
 }
 
 void acados_ros::Timer_callback(const ros::TimerEvent &e)
 {
-    // ros::Time Unity_time = ros::Time::now();
-    // cv::Mat img;
-    // rgb_camera->getRGBImage(img);
-    // sensor_msgs::ImagePtr rgb_msg =
-    //     cv_bridge::CvImage(std_msgs::Header(), "bgr8", img).toImageMsg();
-    // // ros::Time timestamp = ros::Time::now();
-    // rgb_msg->header.stamp = Unity_time;
-    // acados_ros::rgb_pub.publish(rgb_msg);
+    ros::Time Unity_time = ros::Time::now();
+    cv::Mat img;
+    rgb_camera->getRGBImage(img);
+    sensor_msgs::ImagePtr rgb_msg =
+        cv_bridge::CvImage(std_msgs::Header(), "bgr8", img).toImageMsg();
+    // ros::Time timestamp = ros::Time::now();
+    rgb_msg->header.stamp = Unity_time;
+    acados_ros::rgb_pub.publish(rgb_msg);
 
     // rgb_camera->getDepthMap(img);
     // sensor_msgs::ImagePtr depth_msg =
@@ -152,10 +86,10 @@ int main(int argc, char *argv[])
     acados_ros::QuadThrusts_sub = nh.subscribe("flightmare_control/thrusts", 1, acados_ros::UnityCallback);
     acados_ros::QuadCurStates_pub = nh.advertise<mav_msgs::QuadCurState>("flightmare_control/state_info", 1);
     acados_ros::Oritantion_pub = nh.advertise<geometry_msgs::PoseStamped>("flightmare_control/Oritantion", 1);
-    acados_ros::Twist_pub=nh.advertise<geometry_msgs::TwistStamped>("flightmare_control/Twist", 1);
+    acados_ros::Twist_pub = nh.advertise<geometry_msgs::TwistStamped>("flightmare_control/Twist", 1);
     image_transport::ImageTransport it(pnh);
     acados_ros::rgb_pub = it.advertise("/flightmare_control/rgb", 1);
-    acados_ros::depth_pub= it.advertise("/flightmare_control/depth", 1);
+    acados_ros::depth_pub = it.advertise("/flightmare_control/depth", 1);
     // 创建发布者
     // unity 场景设置--------------------------------------------------------------------------//
     // Flightmare(Unity3D)
@@ -218,16 +152,16 @@ int main(int argc, char *argv[])
     // unity 场景设置--------------------------------------------------------------------------//
 
     // Initialize camera
-    // Vector<3> B_r_BC(0.0, 0.0, 0.3);
-    // Matrix<3, 3> R_BC = Quaternion(1.0, 0.0, 0.0, 0.0).toRotationMatrix();
-    // std::cout << R_BC << std::endl;
-    // rgb_camera->setFOV(90);
-    // rgb_camera->setWidth(640);
-    // rgb_camera->setHeight(360);
-    // rgb_camera->setRelPose(B_r_BC, R_BC);
-    // rgb_camera->setPostProcesscing(std::vector<bool>{
-    //     false, false, false}); // depth, segmentation, optical flow
-    // quad_ptr->addRGBCamera(rgb_camera);
+    Vector<3> B_r_BC(0.0, 0.0, 0.3);
+    Matrix<3, 3> R_BC = Quaternion(std::cos(-M_PI / 4), 0.0, 0.0, std::sin(-M_PI / 4)).toRotationMatrix();
+    std::cout << R_BC << std::endl;
+    rgb_camera->setFOV(90);
+    rgb_camera->setWidth(640);
+    rgb_camera->setHeight(360);
+    rgb_camera->setRelPose(B_r_BC, R_BC);
+    rgb_camera->setPostProcesscing(std::vector<bool>{
+        false, false, false}); // depth, segmentation, optical flow
+    quad_ptr->addRGBCamera(rgb_camera);
 
     // Start racing
     ros::Time t0 = ros::Time::now();
@@ -250,15 +184,102 @@ int main(int argc, char *argv[])
     // connect unity
     unity_ready = unity_bridge_ptr->connectUnity(scene_id);
 
-    // ros::Timer timer = nh.createTimer(ros::Duration(0.00), acados_ros::Timer_callback);
+    ros::Timer timer = nh.createTimer(ros::Duration(0.05), acados_ros::Timer_callback);
 
     FrameID frame_id = 0;
+
+    ros::Rate loop_rate(100);
+    // 初始化力矩
+    thrusts_1 = 2.4525;
+    thrusts_2 = 2.4525;
+    thrusts_3 = 2.4525;
+    thrusts_4 = 2.4525;
 
     if (unity_ready)
     {
         // render_process.
-        ros::spin();
+        static uint32_t seq_i;
         // std::thread render_thread{render_process};
+        while (ros::ok())
+        {
+            ros::spinOnce();
+
+            seq_i++;
+            Scalar t = 0.0;
+            Vector<4> thrusts{thrusts_1, thrusts_2, thrusts_3, thrusts_4};
+            // Vector<4> thrusts{2.490,2.49,2.49,2.49};
+            Command cmd(t, thrusts);
+            Scalar ctl_dt = 0.01;
+            // 检查命令是否有效
+            if (cmd.valid())
+            {
+                std::cout << "Command is valid." << std::endl;
+                quad_ptr->run(cmd, ctl_dt);
+            }
+
+            // 检查控制模式
+            if (cmd.isSingleRotorThrusts())
+            {
+                std::cout << "Using single rotor thrusts mode." << std::endl;
+                std::cout << "Thrusts: " << cmd.thrusts.transpose() << std::endl;
+            }
+            std::cout << quad_ptr->getDynamics() << std::endl; // 打印动态方程参数
+            // 发布无人机状态信息
+            quad_ptr->getState(&quad_state);
+            mav_msgs::QuadCurState quad_state_msg;
+            quad_state_msg.x = quad_state.x[QS::POSX];
+            quad_state_msg.y = quad_state.x[QS::POSY];
+            quad_state_msg.z = quad_state.x[QS::POSZ];
+            quad_state_msg.vx = quad_state.x[QS::VELX];
+            quad_state_msg.vy = quad_state.x[QS::VELY];
+            quad_state_msg.vz = quad_state.x[QS::VELZ];
+            quad_state_msg.qw = quad_state.x[QS::ATTW];
+            quad_state_msg.qx = quad_state.x[QS::ATTX];
+            quad_state_msg.qy = quad_state.x[QS::ATTY];
+            quad_state_msg.qz = quad_state.x[QS::ATTZ];
+            quad_state_msg.p = quad_state.x[QS::OMEX];
+            quad_state_msg.q = quad_state.x[QS::OMEY];
+            quad_state_msg.r = quad_state.x[QS::OMEZ];
+            ros::Time Unity_time = ros::Time::now();
+            quad_state_msg.time = Unity_time.toSec();
+            acados_ros::QuadCurStates_pub.publish(quad_state_msg);
+
+            geometry_msgs::PoseStamped pose_msg;
+            pose_msg.pose.orientation.w = quad_state_msg.qw;
+            pose_msg.pose.orientation.x = quad_state_msg.qx;
+            pose_msg.pose.orientation.y = quad_state_msg.qy;
+            pose_msg.pose.orientation.z = quad_state_msg.qz;
+            pose_msg.pose.position.x = quad_state_msg.x;
+            pose_msg.pose.position.y = quad_state_msg.y;
+            pose_msg.pose.position.z = quad_state_msg.z;
+            pose_msg.header.stamp = Unity_time;
+            pose_msg.header.frame_id = "world";
+            pose_msg.header.seq = seq_i;
+            // pose_msg.header.seq=
+            acados_ros::Oritantion_pub.publish(pose_msg);
+
+            // geometry_msgs::TwistStamped twist_msg;
+            // twist_msg.twist.linear.x = quad_state_msg.vx;
+            // twist_msg.twist.linear.y = quad_state_msg.vy;
+            // twist_msg.twist.linear.z = quad_state_msg.vz;
+            // twist_msg.twist.angular.x = quad_state_msg.p;
+            // twist_msg.twist.angular.y = quad_state_msg.q;
+            // twist_msg.twist.angular.z = quad_state_msg.r;
+            // twist_msg.header.stamp = Unity_time;
+            // twist_msg.header.frame_id = "world";
+            // twist_msg.header.seq = seq_i;
+            // acados_ros::Twist_pub.publish(twist_msg);
+
+            printf("pos: x:%f, y:%f, z:%f \r\n vel: x:%f, y:%f, z:%f \r\nquat: w:%f, x:%f, y:%f, z:%f \r\n w: p:%f, q:%f, r:%f\r\n", quad_state.x[QS::POSX], quad_state.x[QS::POSY], quad_state.x[QS::POSZ], quad_state.x[QS::VELX], quad_state.x[QS::VELY], quad_state.x[QS::VELZ],
+                   quad_state.x[QS::ATTW], quad_state.x[QS::ATTX], quad_state.x[QS::ATTY], quad_state.x[QS::ATTZ], quad_state.x[QS::OMEX], quad_state.x[QS::OMEY], quad_state.x[QS::OMEZ]);
+            unity_bridge_ptr->getRender(0);
+            unity_bridge_ptr->handleOutput();
+            // loop_rate.sleep();
+            static ros::Time last_time;
+            ros::Time delay_time = ros::Time::now();
+            printf("render delay: %f ms \r\n", (delay_time.toSec() - last_time.toSec()) * 1000);
+            last_time = Unity_time;
+        }
     }
     else
         ROS_ERROR("Unity not ready!");

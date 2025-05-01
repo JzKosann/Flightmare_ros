@@ -5,6 +5,9 @@ from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped, TwistStamped
 from tf.transformations import quaternion_from_matrix
 from scipy.interpolate import CubicSpline
+import csv
+import os
+
 
 # 🧭 根据速度向量计算“朝前”飞行姿态（四元数）
 def compute_orientation_from_fixed_direction(direction, up=np.array([0, 0, 1])):
@@ -83,10 +86,25 @@ def generate_path(num_points=150, desired_speed=2.0):
     trajectory = generate_trajectory(waypoints, num_points=num_points, desired_speed=desired_speed)
     return trajectory
 
+
+def save_trajectory_to_csv(trajectory, save_path="~/trajectory.csv"):
+    save_path = os.path.expanduser(save_path)
+    with open(save_path, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["x", "y", "z", "vx", "vy", "vz", "qx", "qy", "qz", "qw"])  # 表头
+        for pos, vel, quat in trajectory:
+            writer.writerow([
+                pos[0], pos[1], pos[2],
+                vel[0], vel[1], vel[2],
+                quat[0], quat[1], quat[2], quat[3]
+            ])
+    rospy.loginfo(f"Trajectory saved to: {save_path}")
+
+
 # 🏁 主函数：定义赛道门 + 执行轨迹生成与发布
 if __name__ == "__main__":
     waypoints = [
-        [0,0,0],
+        [0,0,2.5],
         [-2, 8, 2.5],
         [9, 9, 2.5],
         [10, 0, 2.5],
@@ -94,7 +112,10 @@ if __name__ == "__main__":
         [0, -10.0, 2.5],
         [-8, -7, 6.2],
         [-8, -7, 2.5],
-        [-8, -7, 6.2]
+        # [-8, -7, 6.2]
     ]
     trajectory = generate_trajectory(waypoints, num_points=150)
+    # 保存到 CSV
+    # save_trajectory_to_csv(trajectory, save_path="/home/jz/Documents/ads_fpv_ws/src/acados_nmpc_controller/source/path.csv")
+
     publish_path(trajectory)

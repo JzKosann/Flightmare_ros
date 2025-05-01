@@ -52,9 +52,9 @@ class NMPC_Controller:
 
         # 权重设置 # // TODO 权重需要更改
         # Q = np.eye(self.nx) # 状态权重
-        Q = np.diag([   2000.0,  2000.0,  3000.0, 
+        Q = np.diag([   1000.0,  1000.0,  2000.0, 
                         50,      50,     50,
-                        2000,      4000,      4000,    2000,
+                        2000,      2000,      2000,    2000,
                         10,      10,    10])        
         R = np.eye(self.nu) # 控制权重
         # R = np.diag([5e-4, 5e-4, 5e-4, 5e-4])
@@ -73,7 +73,7 @@ class NMPC_Controller:
         self.ocp.cost.Vu = Vu
 
         # self.ocp.cost.W_e = 50.0 * Q
-        self.ocp.cost.W_e = Q
+        self.ocp.cost.W_e = 5*Q
 
         Vx_e = np.zeros((self.ny_e, self.nx))
         Vx_e = np.diag([    1.0,    1.0,    1.0,
