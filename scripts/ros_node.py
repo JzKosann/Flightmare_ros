@@ -23,11 +23,6 @@ quad_pos_error_pub = None
 is_get_state = False    # 是否获取实时状态
 
 flight_mode = None      # 无人机飞行状态 『‘takeoff', 'trajectory'』
-# 设置保存文件路径
-csv_save_path = os.path.expanduser("/home/jz/Documents/ads_fpv_ws/src/acados_nmpc_controller/source/single_trajectory.csv")  # 可以修改为你想保存的路径
-csv_thrust = os.path.expanduser("/home/jz/Documents/ads_fpv_ws/src/acados_nmpc_controller/source/single_thrust.csv")  # 可以修改为你想保存的路径
-contorl_flag = False
-log_time = 0
 
 def normalize_quaternion(qw, qx, qy, qz):
     norm = np.sqrt(qw**2 + qx**2 + qy**2 + qz**2)
@@ -76,15 +71,6 @@ if __name__ == '__main__':
     hover_counts = 0                # 悬停计时
     hover_rate = rospy.Rate(1)     # hover_counts = 10 为悬停10s
     hover_reach_threshold = 0.5
-
-    if not os.path.exists(csv_save_path):
-        with open(csv_save_path, mode='w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(["time", "pos_x","pos_y","pos_z","quat_w","quat_x","quat_y","quat_z","vel_x", "vel_y", "vel_z", "pos_error", "quat_error"])
-    if not os.path.exists(csv_thrust):
-        with open(csv_thrust, mode='w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(["time", "thrust1", "thrust2", "thrust3", "thrust4"])
 
 
     while not rospy.is_shutdown():
@@ -174,24 +160,6 @@ if __name__ == '__main__':
                 single_pos_error = np.linalg.norm(single_track_pos_tar-cur_pos)
                 single_quat_error = np.linalg.norm(cur_quat-np.array([0.9855, 0.0, 0.0, -0.1690]))
 
-                with open(csv_save_path, mode='a', newline='') as file:
-                    writer = csv.writer(file)
-                    writer.writerow([
-                        log_time,
-                        quad_state.x,
-                        quad_state.y,
-                        quad_state.z,
-                        quad_state.qw,
-                        quad_state.qx,
-                        quad_state.qy,
-                        quad_state.qz,
-                        quad_state.vx,
-                        quad_state.vy,
-                        quad_state.vz,
-                        single_pos_error,
-                        single_quat_error
-                    ])
-                contorl_flag = True
             else:
                 pass
 
@@ -204,16 +172,6 @@ if __name__ == '__main__':
             quad_thrusts_pub.publish(quad_thrusts_msg)
 
             current_time = rospy.get_rostime().to_sec()
-            if contorl_flag:
-                with open(csv_thrust, mode='a', newline='') as file:
-                        writer = csv.writer(file)
-                        writer.writerow([
-                            log_time,
-                            quad_thrusts_msg.thrusts_1,
-                            quad_thrusts_msg.thrusts_2,
-                            quad_thrusts_msg.thrusts_3,
-                            quad_thrusts_msg.thrusts_4,
-                        ])
             print(f"Thrust:[{w[0]},{w[1]},{w[2]},{w[3]}]")
             print(f"delay {(current_time - last_time)*1000}ms")
             print(f"flight_mode: {flight_mode}, {hover_counts}")

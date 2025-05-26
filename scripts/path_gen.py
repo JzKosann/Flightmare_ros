@@ -8,8 +8,6 @@ from scipy.interpolate import CubicSpline
 import csv
 import os
 
-
-# 🧭 根据速度向量计算“朝前”飞行姿态（四元数）
 def compute_orientation_from_fixed_direction(direction, up=np.array([0, 0, 1])):
     x_axis = direction / (np.linalg.norm(direction) + 1e-6)
     y_axis = np.cross(up, x_axis)
@@ -18,9 +16,9 @@ def compute_orientation_from_fixed_direction(direction, up=np.array([0, 0, 1])):
     z_axis /= (np.linalg.norm(z_axis) + 1e-6)
 
     R = np.eye(4)
-    R[0:3, 0] = x_axis  # 红色：前向
-    R[0:3, 1] = y_axis  # 绿色：左向
-    R[0:3, 2] = z_axis  # 蓝色：上向
+    R[0:3, 0] = x_axis  
+    R[0:3, 1] = y_axis  
+    R[0:3, 2] = z_axis  
     return quaternion_from_matrix(R)
 
 
@@ -49,13 +47,10 @@ def generate_trajectory(waypoints, num_points=200, desired_speed=2.0):
         # 姿态四元数
         quat = compute_orientation_from_fixed_direction(direction)
 
-        # 每个点现在包含：位置、速度、姿态
+        # 位置、速度、姿态
         trajectory.append((pos, velocity, quat))
     return trajectory
 
-
-
-# 🚀 发布 ROS Path 消息（循环发布）
 def publish_path(trajectory):
     path_msg = Path()
     path_msg.header.frame_id = "world"
@@ -101,7 +96,6 @@ def save_trajectory_to_csv(trajectory, save_path="~/trajectory.csv"):
     rospy.loginfo(f"Trajectory saved to: {save_path}")
 
 
-# 🏁 主函数：定义赛道门 + 执行轨迹生成与发布
 if __name__ == "__main__":
     waypoints = [
         [0,0,5],
