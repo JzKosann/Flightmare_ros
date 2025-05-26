@@ -9,7 +9,7 @@ import csv
 import os
 
 
-# 🧭 根据速度向量计算“朝前”飞行姿态（四元数）
+# 根据速度向量计算“朝前”飞行姿态（四元数）
 def compute_orientation_from_fixed_direction(direction, up=np.array([0, 0, 1])):
     x_axis = direction / (np.linalg.norm(direction) + 1e-6)
     y_axis = np.cross(up, x_axis)
@@ -55,7 +55,7 @@ def generate_trajectory(waypoints, num_points=200, desired_speed=2.0):
 
 
 
-# 🚀 发布 ROS Path 消息（循环发布）
+# 发布 ROS Path 消息（循环发布）
 def publish_path(trajectory):
     path_msg = Path()
     path_msg.header.frame_id = "world"
@@ -101,7 +101,7 @@ def save_trajectory_to_csv(trajectory, save_path="~/trajectory.csv"):
     rospy.loginfo(f"Trajectory saved to: {save_path}")
 
 
-# 🏁 主函数：定义赛道门 + 执行轨迹生成与发布
+# 主函数：定义赛道门 + 执行轨迹生成与发布
 if __name__ == "__main__":
     waypoints = [
         [0,0,2.5],
@@ -116,6 +116,5 @@ if __name__ == "__main__":
     ]
     trajectory = generate_trajectory(waypoints, num_points=150)
     # 保存到 CSV
-    # save_trajectory_to_csv(trajectory, save_path="/home/jz/Documents/ads_fpv_ws/src/acados_nmpc_controller/source/path.csv")
 
     publish_path(trajectory)
