@@ -23,9 +23,6 @@ quad_pos_error_pub = None
 is_get_state = False    # 是否获取实时状态
 
 flight_mode = None      # 无人机飞行状态 『‘takeoff', 'trajectory'』
-# 设置保存文件路径
-vel_save_path = os.path.expanduser("/home/jz/Documents/ads_fpv_ws/src/acados_nmpc_controller/source/vel.csv")  # 可以修改为你想保存的路径
-trajectory_csv_written = False  # 控制只写入一次表头
 
 def normalize_quaternion(qw, qx, qy, qz):
     norm = np.sqrt(qw**2 + qx**2 + qy**2 + qz**2)
@@ -74,11 +71,6 @@ if __name__ == '__main__':
     hover_counts = 0                # 悬停计时
     hover_rate = rospy.Rate(1)     # hover_counts = 10 为悬停10s
     hover_reach_threshold = 0.5
-
-    if not os.path.exists(vel_save_path):
-        with open(vel_save_path, mode='w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(["time", "vel_x", "vel_y", "vel_z"])
 
 
     while not rospy.is_shutdown():
@@ -156,15 +148,6 @@ if __name__ == '__main__':
                 # current_path.header.frame_id = "world"
                 # current_path.poses.append(current_pose)
                 # quad_traj_pub.publish(current_path)
-                # === 记录轨迹点到内存 ===
-                with open(vel_save_path, mode='a', newline='') as file:
-                    writer = csv.writer(file)
-                    writer.writerow([
-                        rospy.Time.now().to_sec(),
-                        quad_state.vx,
-                        quad_state.vy,
-                        quad_state.vz
-                    ])
             else:
                 pass
 
@@ -177,16 +160,7 @@ if __name__ == '__main__':
             quad_thrusts_pub.publish(quad_thrusts_msg)
 
             current_time = rospy.get_rostime().to_sec()
-            # with open(control_save_path, mode='a', newline='') as file:
-            #         writer = csv.writer(file)
-            #         writer.writerow([
-            #             rospy.Time.now().to_sec(),
-            #             quad_thrusts_msg.thrusts_1,
-            #             quad_thrusts_msg.thrusts_2,
-            #             quad_thrusts_msg.thrusts_3,
-            #             quad_thrusts_msg.thrusts_4,
-            #             pos_error 
-            #         ])
+
             print(f"Thrust:[{w[0]},{w[1]},{w[2]},{w[3]}]")
             print(f"delay {(current_time - last_time)*1000}ms")
             print(f"flight_mode: {flight_mode}, {hover_counts}")
