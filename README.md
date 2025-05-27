@@ -4,7 +4,10 @@ Here is my own page **[Page](https://jzkosann.github.io/)**
 ## Introduce
 This project demonstrates the design and implementation of a high-performance Model Predictive Controller (MPC) for a quadrotor operating within the Flightmare simulation environment, utilizing the acados toolkit. acados facilitates the efficient solving of Optimal Control Problems (OCPs) and generates C-code suitable for embedded systems, while Flightmare provides a realistic, physics-based drone simulation environment with high-quality visualization through Unity.
 
-The primary goal is to achieve precise and agile trajectory tracking for the quadrotor.
+The primary goal is to achieve precise and agile trajectory tracking for the quadrotor.🥳
+
+Here is the video.👇
+[![IMAGE ALT TEXT HERE](youtube.png)](https://youtu.be/0tH68vLpp1M)
 
 ## Technology Stack
 
