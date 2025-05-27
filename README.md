@@ -45,7 +45,7 @@ It is recommended to use Ubuntu 18.04 (Melodic) or 20.04 (Noetic) with ROS insta
 Assume u have already install **[Flightmare](https://flightmare.readthedocs.io/en/latest/)**, and init **[ROS](https://www.ros.org/)** workspace.
 ```bash
 cd src # in ur ros workspace (such as catkin_ws/src)
-git clone git@github.com:JzKosann/Flightmare_ros.git
+git clone git@github.com:JzKosann/NMPC_Flightmare.git
 cd ..
 catkin build -DPYTHON_EXECUTABLE=/usr/bin/python3 # This is important!
 ```
